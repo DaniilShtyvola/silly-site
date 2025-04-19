@@ -12,7 +12,7 @@ const RandomTextEffect: React.FC<{ oldText: string; newText: string; speed: numb
     const [currentIndex, setCurrentIndex] = useState<number>(0);
 
     const getRandomChar = () => {
-        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_-+=<>/\\|{}[]:;,.~?·•˙°º×÷∆∆Ω≈√≠≡≤≥∑πλσᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛋᛏᛒᛖᛗᛚᛜᛞᛟ';
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_-+=<>/\\|{}[]:;,.~?·•˙°º×÷∆Ω∑ᚠᚢᚦᚨᚱᚷᚹᚺᚾᛁᛇᛈᛉᛋᛏᛒᛖᛗᛚᛜᛞᛟ';
         return chars.charAt(Math.floor(Math.random() * chars.length));
     };
 
@@ -67,7 +67,7 @@ const RandomTextEffect: React.FC<{ oldText: string; newText: string; speed: numb
         return () => clearInterval(intervalId);
     }, [phase, currentIndex, replaceOrder, speed, newText, displayedText]);
 
-    return <span>{displayedText}</span>;
+    return <>{displayedText}</>;
 };
 
 export default RandomTextEffect;

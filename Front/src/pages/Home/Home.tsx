@@ -1,13 +1,12 @@
 import { PageWrapper, PageContainer } from '../Page.styled.ts';
-
-import Loading from '../../components/Loading/Loading.tsx'
+import Loading from '../../components/Loading/Loading.tsx';
 
 const Home = () => {
-   
+
    return (
       <PageWrapper>
          <PageContainer>
-            <Loading/>
+            <Loading />
          </PageContainer>
       </PageWrapper>
    );

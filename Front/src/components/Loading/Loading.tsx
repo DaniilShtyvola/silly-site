@@ -9,6 +9,7 @@ import { faCheck, faSatellite, faGlobe, faMagnifyingGlass, faServer, faHourglass
 
 import LoadingDots from "../LoadingDots/LoadingsDots";
 import RandomText from "../RandomText/RandomText";
+import ExplosionWrapper from "../ExplosionWrapper/ExplosionWrapper";
 
 interface StageProps {
     icon?: FontAwesomeIconProps['icon'];
@@ -128,16 +129,18 @@ const Stage: React.FC<StageProps> = ({ icon, text, show, status, size, hide }) =
 };
 
 const Loading = () => {
-    const [progress, setProgress] = useState(0);
+    const [progress, setProgress] = useState(100);
 
     useEffect(() => {
         const interval = setInterval(() => {
             setProgress((prevProgress) => {
-                if (prevProgress === 110) {
+                const next = prevProgress + 1;
+                if (prevProgress === 150) {
                     clearInterval(interval);
                     return prevProgress;
                 }
-                return prevProgress + 1;
+
+                return next;
             });
         }, 150);
 
@@ -146,76 +149,81 @@ const Loading = () => {
 
     return (
         <div style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-start",
-            height: "100%",
             paddingTop: "20%"
         }}>
-            <p style={{
-                color: "rgb(197, 202, 209)",
-                fontSize: "120%",
-                margin: "4px 4px",
-                fontWeight: "600",
-                textAlign: "center"
-            }}>
-                {progress != 110 ? (
-                    "Please Stand By"
-                ) : (
-                    <RandomText oldText="Please Stand By" newText="Succesfully launched the website!" speed={10} />
-                )}
-            </p>
-            <ProgressBar
-                now={progress}
-                label={
-                    <div
+            <ExplosionWrapper explode={progress >= 125}>
+                <div style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-start",
+                }}>
+                    <p style={{
+                        color: "rgb(197, 202, 209)",
+                        fontSize: "120%",
+                        margin: "4px 4px",
+                        fontWeight: "600",
+                        textAlign: "center"
+                    }}>
+                        {progress < 110 ? (
+                            "Please Stand By"
+                        ) : (
+                            <RandomText oldText="Please Stand By" newText="Succesfully launched the website!" speed={10} />
+                        )}
+                    </p>
+                    <ProgressBar
+                        now={progress}
+                        label={
+                            <div
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
+                                }}
+                            >
+                                {`${progress < 100 ? progress : 100}`}
+                                <FontAwesomeIcon
+                                    icon={faPercent}
+                                    style={{
+                                        marginLeft: '2px',
+                                        fontSize: "14px",
+                                        paddingTop: "1px"
+                                    }}
+                                />
+                            </div>
+                        }
+                        variant="success"
                         style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center"
+                            backgroundColor: "rgb(33, 37, 41)",
+                            width: "480px",
+                            height: "18px"
                         }}
-                    >
-                        {`${progress < 100 ? progress : 100}`}
-                        <FontAwesomeIcon
-                            icon={faPercent}
-                            style={{
-                                marginLeft: '2px',
-                                fontSize: "14px",
-                                paddingTop: "1px"
-                            }}
-                        />
-                    </div>
-                }
-                variant="success"
-                style={{
-                    backgroundColor: "rgb(33, 37, 41)",
-                    width: "480px",
-                    height: "18px"
-                }}
-            />
-            <Stage icon={faGlobe} text={progress < 35 ? "Checking your connection..." : "Personal information stolen"} show={progress > 5} status={progress < 35} size="big" />
-            <Stage text="Eating your cookies" show={progress > 6} status={progress < 10} hide={progress > 43} size="small" />
-            <Stage text="Installing spyware that you won't even notice" show={progress > 10} status={progress < 21} hide={progress > 43} size="small" />
-            <Stage text="Uploading your entire browser history" show={progress > 21} status={progress < 30} hide={progress > 43} size="small" />
-            <Stage text="Stealing your IP address" show={progress > 30} status={progress < 35} hide={progress > 43} size="small" />
+                    />
 
-            <Stage icon={faSatellite} text={progress < 59 ? "Connecting to satellite..." : "Satellite configuration changed"} show={progress > 35} status={progress < 59} size="big" />
-            <Stage text="Sending signal to the satellite" show={progress > 37} status={progress < 40} hide={progress > 67} size="small" />
-            <Stage text="Aligning satellite to lock onto your location" show={progress > 40} status={progress < 54} hide={progress > 67} size="small" />
-            <Stage text="Adjusting the lens" show={progress > 54} status={progress < 59} hide={progress > 67} size="small" />
+                    <Stage icon={faGlobe} text={progress < 35 ? "Checking your connection..." : "Personal information stolen"} show={progress > 5} status={progress < 35} size="big" />
+                    <Stage text="Eating your cookies" show={progress > 6} status={progress < 10} hide={progress > 43} size="small" />
+                    <Stage text="Installing spyware that you won't even notice" show={progress > 10} status={progress < 21} hide={progress > 43} size="small" />
+                    <Stage text="Uploading your entire browser history" show={progress > 21} status={progress < 30} hide={progress > 43} size="small" />
+                    <Stage text="Stealing your IP address" show={progress > 30} status={progress < 35} hide={progress > 43} size="small" />
 
-            <Stage icon={faMagnifyingGlass} text={progress < 78 ? "Tracking your shady activities..." : "Interpol has been notified"} show={progress > 59} status={progress < 78} size="big" />
-            <Stage text="Accessing secret files" show={progress > 60} status={progress < 68} hide={progress > 86} size="small" />
-            <Stage text="Scanning international criminal databases" show={progress > 68} status={progress < 74} hide={progress > 86} size="small" />
-            <Stage text="Examining your international criminal connections" show={progress > 74} status={progress < 78} hide={progress > 86} size="small" />
-            <Stage icon={faHourglassStart} text="Stay exactly where you are" show={progress > 76} status={progress < 78} size="small" />
+                    <Stage icon={faSatellite} text={progress < 59 ? "Connecting to satellite..." : "Satellite configuration changed"} show={progress > 35} status={progress < 59} size="big" />
+                    <Stage text="Sending signal to the satellite" show={progress > 37} status={progress < 40} hide={progress > 67} size="small" />
+                    <Stage text="Aligning satellite to lock onto your location" show={progress > 40} status={progress < 54} hide={progress > 67} size="small" />
+                    <Stage text="Adjusting the lens" show={progress > 54} status={progress < 59} hide={progress > 67} size="small" />
 
-            <Stage icon={faServer} text={progress < 100 ? "Connecting to the backend..." : "Connected to the mothership"} show={progress > 78} status={progress < 100} size="big" />
-            <Stage text="Calculating the chances of success" show={progress > 79} status={progress < 86} hide={progress > 108} size="small" />
-            <Stage text="Dusting off the servers" show={progress > 86} status={progress < 90} hide={progress > 108} size="small" />
-            <Stage text="Decrypting the ancient scrolls" show={progress > 90} status={progress < 95} hide={progress > 108} size="small" />
-            <Stage text="Hacking into the Matrix" show={progress > 95} status={progress < 97} hide={progress > 108} size="small" />
-            <Stage text="Activating secret government protocols" show={progress > 97} status={progress < 100} hide={progress > 108} size="small" />
+                    <Stage icon={faMagnifyingGlass} text={progress < 78 ? "Tracking your shady activities..." : "Interpol has been notified"} show={progress > 59} status={progress < 78} size="big" />
+                    <Stage text="Accessing secret files" show={progress > 60} status={progress < 68} hide={progress > 86} size="small" />
+                    <Stage text="Scanning international criminal databases" show={progress > 68} status={progress < 74} hide={progress > 86} size="small" />
+                    <Stage text="Examining your international criminal connections" show={progress > 74} status={progress < 78} hide={progress > 86} size="small" />
+                    <Stage icon={faHourglassStart} text="Stay exactly where you are" show={progress > 76} status={progress < 78} size="small" />
+
+                    <Stage icon={faServer} text={progress < 100 ? "Connecting to the backend..." : "Connected to the mothership"} show={progress > 78} status={progress < 100} size="big" />
+                    <Stage text="Calculating the chances of success" show={progress > 79} status={progress < 86} hide={progress > 108} size="small" />
+                    <Stage text="Dusting off the servers" show={progress > 86} status={progress < 90} hide={progress > 108} size="small" />
+                    <Stage text="Decrypting the ancient scrolls" show={progress > 90} status={progress < 95} hide={progress > 108} size="small" />
+                    <Stage text="Hacking into the Matrix" show={progress > 95} status={progress < 97} hide={progress > 108} size="small" />
+                    <Stage text="Activating secret government protocols" show={progress > 97} status={progress < 100} hide={progress > 108} size="small" />
+                </div>
+            </ExplosionWrapper>
         </div>
     );
 };
