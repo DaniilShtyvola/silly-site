@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Identity.Data;
 
 namespace Controllers
 {
-    [Route("Auth")]
+    [Route("auth")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -94,7 +94,6 @@ namespace Controllers
                 return false;
             }
         }
-
         private string HashPassword(string password)
         {
             var salt = new byte[16];

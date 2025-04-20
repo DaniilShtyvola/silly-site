@@ -9,6 +9,6 @@ public class User
     public bool IsAdmin { get; set; } = false;
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLogin { get; set; }
-    public string AvatarBase64 { get; set; }
+    public string? AvatarBase64 { get; set; }
     public ICollection<VisitorInfo> VisitorInfos { get; set; } = new List<VisitorInfo>();
 }
