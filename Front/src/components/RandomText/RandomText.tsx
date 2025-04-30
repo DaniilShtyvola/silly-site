@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 
-const RandomTextEffect: React.FC<{ oldText: string; newText: string; speed: number }> = ({
-    oldText,
-    newText,
+const RandomTextEffect: React.FC<{ text: string; speed: number }> = ({
+    text,
     speed
 }) => {
-    const maxLength = Math.max(oldText.length, newText.length);
-    const [displayedText, setDisplayedText] = useState<string>(oldText.padEnd(maxLength));
+    const [displayedText, setDisplayedText] = useState<string>(text);
     const [replaceOrder, setReplaceOrder] = useState<number[]>([]);
     const [phase, setPhase] = useState<'randomize' | 'finalize' | 'remove'>('randomize');
     const [currentIndex, setCurrentIndex] = useState<number>(0);
+    const [oldText, setOldText] = useState<string>('');
 
     const getRandomChar = () => {
         const chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_-+=<>/\\|{}[]:;,.~?·•˙°º×÷∆Ω∑ᚠᚢᚦᚨᚱᚷᚹᚺᚾᛁᛇᛈᛉᛋᛏᛒᛖᛗᛚᛜᛞᛟ';
@@ -17,7 +16,9 @@ const RandomTextEffect: React.FC<{ oldText: string; newText: string; speed: numb
     };
 
     useEffect(() => {
-        const maxLength = Math.max(oldText.length, newText.length);
+        if (text === oldText) return;
+
+        const maxLength = Math.max(oldText.length, text.length);
         const paddedOld = oldText.padEnd(maxLength);
 
         const order = Array.from({ length: maxLength }, (_, index) => index);
@@ -30,7 +31,8 @@ const RandomTextEffect: React.FC<{ oldText: string; newText: string; speed: numb
         setReplaceOrder(order);
         setPhase('randomize');
         setCurrentIndex(0);
-    }, [oldText, newText]);
+        setOldText(text);
+    }, [text, oldText]);
 
     useEffect(() => {
         if (replaceOrder.length === 0) return;
@@ -40,7 +42,7 @@ const RandomTextEffect: React.FC<{ oldText: string; newText: string; speed: numb
                 if (phase === 'randomize') {
                     setPhase('finalize');
                     setCurrentIndex(0);
-                } else if (phase === 'finalize' && displayedText.length > newText.length) {
+                } else if (phase === 'finalize' && displayedText.length > text.length) {
                     setPhase('remove');
                     setCurrentIndex(0);
                 }
@@ -54,8 +56,8 @@ const RandomTextEffect: React.FC<{ oldText: string; newText: string; speed: numb
                 if (phase === 'randomize') {
                     arr[idx] = getRandomChar();
                 } else if (phase === 'finalize') {
-                    arr[idx] = newText[idx] ?? '';
-                } else if (phase === 'remove' && displayedText.length != newText.length) {
+                    arr[idx] = text[idx] ?? '';
+                } else if (phase === 'remove' && displayedText.length != text.length) {
                     arr.pop();
                 }
                 return arr.join('');
@@ -65,7 +67,7 @@ const RandomTextEffect: React.FC<{ oldText: string; newText: string; speed: numb
         }, speed);
 
         return () => clearInterval(intervalId);
-    }, [phase, currentIndex, replaceOrder, speed, newText, displayedText]);
+    }, [phase, currentIndex, replaceOrder, speed, text, displayedText]);
 
     return <>{displayedText}</>;
 };

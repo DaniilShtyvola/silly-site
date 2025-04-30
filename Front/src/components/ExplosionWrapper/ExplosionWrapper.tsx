@@ -22,6 +22,7 @@ interface ExplosionWrapperProps {
     fragmentSize?: number;       // Size of each fragment (default: 20px)
     duration?: number;           // Animation duration in seconds (default: 0.8s)
     explosionForce?: number;     // Force of explosion (default: 140)
+    onAnimationComplete?: () => void;
 }
 
 const ExplosionWrapper: React.FC<ExplosionWrapperProps> = ({
@@ -30,6 +31,7 @@ const ExplosionWrapper: React.FC<ExplosionWrapperProps> = ({
     fragmentSize = 20,
     duration = 0.8,
     explosionForce = 140,
+    onAnimationComplete,
 }) => {
     // State for storing all fragments
     const [fragments, setFragments] = useState<FragmentData[] | null>(null);
@@ -231,15 +233,17 @@ const ExplosionWrapper: React.FC<ExplosionWrapperProps> = ({
 
         const timer = setTimeout(() => {
             setFragments(null);
+
+            onAnimationComplete?.();
         }, duration * 1000);
 
         return () => clearTimeout(timer);
-    }, [fragments, duration]);
+    }, [fragments, duration, onAnimationComplete]);
 
     return (
         <div style={{ position: 'relative', display: 'inline-block' }}>
             {/* Original content (hidden during explosion) */}
-            <div ref={childrenRef} style={{ visibility: isVisible ? 'visible' : 'hidden' }}>
+            <div ref={childrenRef} style={{ visibility: isVisible ? 'visible' : 'hidden'}}>
                 {children}
             </div>
 

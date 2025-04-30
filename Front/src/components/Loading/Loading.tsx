@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import './Loading.css';
 
 import { ProgressBar, Spinner } from "react-bootstrap";
-import "bootstrap/dist/css/bootstrap.min.css";
 
 import { FontAwesomeIcon, FontAwesomeIconProps } from "@fortawesome/react-fontawesome";
 import { faCheck, faSatellite, faGlobe, faMagnifyingGlass, faServer, faHourglassStart, faPercent } from "@fortawesome/free-solid-svg-icons";
@@ -21,18 +20,11 @@ interface StageProps {
 }
 
 const Stage: React.FC<StageProps> = ({ icon, text, show, status, size, hide }) => {
-    const [oldText, setOldText] = useState(text);
     const [isVisible, setIsVisible] = useState(true);
     const [shouldRender, setShouldRender] = useState(true);
     const [height, setHeight] = useState<string | number>("auto");
 
     const ref = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (text !== oldText) {
-            setOldText(oldText);
-        }
-    }, [text]);
 
     const endsWithDots = text.endsWith("...");
 
@@ -114,22 +106,24 @@ const Stage: React.FC<StageProps> = ({ icon, text, show, status, size, hide }) =
                 />
             )}
             <p style={{ marginLeft: size === "big" ? "6px" : "4px" }}>
-                {endsWithDots ? (
-                    <>
-                        {text.slice(0, -3)}<LoadingDots />
-                    </>
-                ) : text === oldText ? (
-                    <>{text}</>
-                ) : (
-                    <RandomText oldText={oldText} newText={text} speed={10} />
+                <RandomText text={endsWithDots ? text.slice(0, -3) : text} speed={10} />
+                {endsWithDots && (
+                    <LoadingDots />
                 )}
             </p>
         </div>
     );
 };
 
-const Loading = () => {
-    const [progress, setProgress] = useState(100);
+interface LoadingProps {
+    onAnimationComplete?: () => void;
+}
+
+const Loading: React.FC<LoadingProps> = ({
+    onAnimationComplete,
+}) => {
+    const [progress, setProgress] = useState(0);
+    const [progressBarText, setProgressBarText] = useState<string>('Please Stand By');
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -138,6 +132,9 @@ const Loading = () => {
                 if (prevProgress === 150) {
                     clearInterval(interval);
                     return prevProgress;
+                }
+                if (prevProgress > 110) {
+                    setProgressBarText("Succesfully launched the website!")
                 }
 
                 return next;
@@ -151,7 +148,10 @@ const Loading = () => {
         <div style={{
             paddingTop: "20%"
         }}>
-            <ExplosionWrapper explode={progress >= 125}>
+            <ExplosionWrapper
+                explode={progress >= 125}
+                onAnimationComplete={onAnimationComplete}
+            >
                 <div style={{
                     display: "flex",
                     flexDirection: "column",
@@ -164,11 +164,7 @@ const Loading = () => {
                         fontWeight: "600",
                         textAlign: "center"
                     }}>
-                        {progress < 110 ? (
-                            "Please Stand By"
-                        ) : (
-                            <RandomText oldText="Please Stand By" newText="Succesfully launched the website!" speed={10} />
-                        )}
+                        <RandomText text={progressBarText} speed={20} />
                     </p>
                     <ProgressBar
                         now={progress}
