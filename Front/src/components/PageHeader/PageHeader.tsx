@@ -125,31 +125,31 @@ const PageHeader: FC<PageHeaderProps> = () => {
                 }}>
                     <RandomText text={hoverState.text} speed={10} />
                 </p>
-                <EaseOutWrapper show={hoverState.link != ''}>
-                    <div
+                <EaseOutWrapper
+                    show={hoverState.link != ''}
+                    duration={400}
+                    style={{
+                        display: "flex",
+                        color: "rgb(100, 105, 111)"
+                    }}
+                >
+                    <p
                         style={{
-                            display: "flex",
-                            color: "rgb(100, 105, 111)"
+                            transition: "color 0.5s ease",
+                            textAlign: "end"
                         }}
                     >
-                        <p
-                            style={{
-                                transition: "color 0.5s ease",
-                                textAlign: "end"
-                            }}
-                        >
-                            <RandomText text={hoverState.link} speed={30} />
-                        </p>
-                        <FontAwesomeIcon
-                            icon={location.pathname === hoverState.link ? faLocationDot : faTurnUp}
-                            style={{
-                                marginLeft: "4px",
-                                position: "relative",
-                                top: location.pathname === hoverState.link ? "4px" : "2.5px",
-                                fontSize: "75%"
-                            }}
-                        />
-                    </div>
+                        <RandomText text={hoverState.link} speed={30} />
+                    </p>
+                    <FontAwesomeIcon
+                        icon={location.pathname === hoverState.link ? faLocationDot : faTurnUp}
+                        style={{
+                            marginLeft: "4px",
+                            position: "relative",
+                            top: location.pathname === hoverState.link ? "4px" : "2.5px",
+                            fontSize: "75%"
+                        }}
+                    />
                 </EaseOutWrapper>
             </div>
         </>

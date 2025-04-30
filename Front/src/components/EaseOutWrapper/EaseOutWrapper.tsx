@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, CSSProperties } from 'react';
 import './EaseOutWrapper.css';
 
 interface EaseOutWrapperProps {
     children: React.ReactNode;
     show: boolean;
+    duration?: number;
+    style?: CSSProperties;
 }
 
-const EaseOutWrapper: React.FC<EaseOutWrapperProps> = ({ children, show }) => {
+const EaseOutWrapper: React.FC<EaseOutWrapperProps> = ({ children, show, duration = 400, style = {} }) => {
     const [isVisible, setIsVisible] = useState<boolean>(show);
 
     useEffect(() => {
@@ -15,20 +17,18 @@ const EaseOutWrapper: React.FC<EaseOutWrapperProps> = ({ children, show }) => {
         } else {
             const timer = setTimeout(() => {
                 setIsVisible(false);
-            }, 300);
-
+            }, duration);
             return () => clearTimeout(timer);
         }
-    }, [show]);
+    }, [show, duration]);
 
     return (
         isVisible && (
             <div
                 className={show ? "slide-in-top" : "slide-out-top"}
                 style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
+                    animationDuration: `${duration}ms`,
+                    ...style,
                 }}
             >
                 {children}

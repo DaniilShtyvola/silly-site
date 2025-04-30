@@ -5,6 +5,7 @@ import Loading from "./components/Loading/Loading";
 import PageHeader from "./components/PageHeader/PageHeader";
 import Home from "./pages/Home/Home";
 import PageWrapper from "./components/PageWrapper/PageWrapper";
+import EaseOutWrapper from "./components/EaseOutWrapper/EaseOutWrapper";
 
 function App() {
     const [isLoadingEnded, setLoadingEnded] = useState(false);
@@ -13,7 +14,7 @@ function App() {
         setTimeout(() => {
             setLoadingEnded(true);
             sessionStorage.setItem("hasVisitedBefore", "true");
-        }, 1000);
+        }, 600);
     };
 
     useEffect(() => {
@@ -30,7 +31,15 @@ function App() {
                 <Loading onAnimationComplete={handleLoadingComplete} />
             ) : (
                 <Router>
-                    <PageHeader />
+                    <EaseOutWrapper
+                        show={isLoadingEnded}
+                        duration={800}
+                        style={{
+                            width: "100%"
+                        }}
+                    >
+                        <PageHeader />
+                    </EaseOutWrapper>
                     <Routes>
                         <Route path="/" element={<Home />} />
                     </Routes>
