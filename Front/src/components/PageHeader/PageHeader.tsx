@@ -11,7 +11,8 @@ import {
     faScrewdriverWrench,
     faCode,
     faTurnUp,
-    faLocationDot
+    faLocationDot,
+    faRightToBracket
 } from "@fortawesome/free-solid-svg-icons";
 
 import RandomText from "../RandomText/RandomText";
@@ -51,6 +52,8 @@ interface PageHeaderProps { }
 const PageHeader: FC<PageHeaderProps> = () => {
     const location = useLocation();
 
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
     const [hoverState, setHoverState] = useState<{ text: string; link: string }>({
         text: 'Hover over a link to get more info...',
         link: ''
@@ -81,6 +84,11 @@ const PageHeader: FC<PageHeaderProps> = () => {
         };
     }, [hoverTimer]);
 
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        setIsAuthenticated(!!token);
+    }, [location]);
+
     return (
         <>
             <Navbar
@@ -109,7 +117,11 @@ const PageHeader: FC<PageHeaderProps> = () => {
                         alignItems: "center"
                     }}
                 >
-                    <CustomNavLink link={"/profile"} icon={faUser} text={"Profile"} tooltip={"View and update your personal information."} onHover={handleHover} />
+                    {isAuthenticated ? (
+                        <CustomNavLink link={"/profile"} icon={faUser} text={"Profile"} tooltip={"View and update your profile information."} onHover={handleHover} />
+                    ) : (
+                        <CustomNavLink link={"/login"} icon={faRightToBracket} text={"Login"} tooltip={"Log in to your account."} onHover={handleHover} />
+                    )}
                 </Nav>
             </Navbar>
             <div style={{

@@ -21,7 +21,7 @@ namespace Controllers
         public AuthController(MainDbContext context, IOptions<JwtSettings> jwtSettings)
         {
             _context = context;
-            _jwtSettings = jwtSettings.Value;  // Access JWT settings from configuration
+            _jwtSettings = jwtSettings.Value;
         }
 
         [HttpPost("register-user")]

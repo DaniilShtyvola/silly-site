@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 
 import Loading from "./components/Loading/Loading";
 import PageHeader from "./components/PageHeader/PageHeader";
-import Home from "./pages/Home/Home";
 import PageWrapper from "./components/PageWrapper/PageWrapper";
 import EaseOutWrapper from "./components/EaseOutWrapper/EaseOutWrapper";
+
+import Home from "./pages/Home/Home";
+import Auth from "./pages/Auth/Auth";
 
 function App() {
     const [isLoadingEnded, setLoadingEnded] = useState(false);
@@ -41,7 +43,8 @@ function App() {
                         <PageHeader />
                     </EaseOutWrapper>
                     <Routes>
-                        <Route path="/" element={<Home />} />
+                        <Route path="/cats" element={<Home />} />
+                        <Route path="/login" element={<Auth/ >} />
                     </Routes>
                 </Router>
             )}

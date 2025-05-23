@@ -5,3 +5,22 @@ p {
 * {
     font-family: monospace
 }
+
+.form-control {
+    background-color: rgb(33, 37, 41);
+    color: white;
+    border: none;
+}
+
+.form-control:focus {
+    background-color: rgb(33, 37, 41);
+    color: white;
+    outline: none;
+    box-shadow: rgb(25, 135, 84) 0px 0px 0px 1px;
+    background-color: rgb(33, 37, 41);
+    color: white;
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.251);
+}
