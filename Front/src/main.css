@@ -22,5 +22,12 @@ p {
 }
 
 .form-control::placeholder {
-    color: rgba(255, 255, 255, 0.251);
+    color: rgb(137, 143, 150);
+}
+
+.form-control:disabled {
+    background-color: rgb(33, 37, 41);
+    color: rgb(137, 143, 150);
+    cursor: default;
+    user-select: none;
 }

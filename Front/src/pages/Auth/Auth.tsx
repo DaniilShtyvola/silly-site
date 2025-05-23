@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import { Form, Button, Alert, ProgressBar } from "react-bootstrap";
 
@@ -11,13 +11,14 @@ import {
 
 import zxcvbn from "zxcvbn";
 
+import RandomText from "../../components/RandomText/RandomText";
 import PageWrapper from "../../components/PageWrapper/PageWrapper";
 
 const PasswordStrengthMeter: React.FC<{ password: string }> = ({ password }) => {
     const testResult = zxcvbn(password);
     const baseScore = testResult.score;
     const hasSpecialChars = /[^a-zA-Z0-9]/.test(password);
-    const lengthBonus = password.length >= 12 ? 1 : 0;
+    const lengthBonus = password.length >= 16 ? 1 : 0;
     const specialBonus = password.length >= 6 && hasSpecialChars ? 1 : 0;
 
     const extendedScore = Math.min(baseScore + lengthBonus + specialBonus, 6);
@@ -87,7 +88,7 @@ const PasswordStrengthMeter: React.FC<{ password: string }> = ({ password }) => 
                 marginRight: "4px",
                 whiteSpace: "nowrap"
             }}>
-                {getLabel()}
+                <RandomText text={getLabel()} speed={10} />
             </p>
         </div>
     );
@@ -100,12 +101,19 @@ const Auth: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [username, setUsername] = useState("");
 
+    const [isGeneratingPassword, setIsGeneratingPassword] = useState(false);
+
     const [message, setMessage] = useState<{
         text: string;
         variant: string;
         icon?: any;
     } | null>(null);
     const [isFadingOut, setIsFadingOut] = useState(false);
+
+    const isLoginRef = useRef(isLogin);
+    useEffect(() => {
+        isLoginRef.current = isLogin;
+    }, [isLogin]);
 
     const API_URL = import.meta.env.VITE_API_URL;
 
@@ -166,28 +174,72 @@ const Auth: React.FC = () => {
         }
     }, [message]);
 
-    const generateStrongPassword = (): string => {
+    const generateStrongPassword = async (
+        setPassword: (value: string) => void,
+        setConfirmPassword: (value: string) => void,
+        getIsLogin: () => boolean
+    ) => {
+        setIsGeneratingPassword(true);
+
         const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const numbers = "0123456789";
         const symbols = "!@#$%^&*";
-
-        const getRandom = (set: string) =>
-            set.charAt(Math.floor(Math.random() * set.length));
-
+        const getRandom = (set: string) => set.charAt(Math.floor(Math.random() * set.length));
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
         const passwordChars: string[] = [];
 
-        while (passwordChars.length < 16) {
-            passwordChars.push(getRandom(letters));
-            if (passwordChars.length < 16) passwordChars.push(getRandom(numbers));
-            if (passwordChars.length < 16) passwordChars.push(getRandom(symbols));
-        }
+        const abortIfLogin = async () => {
+            if (getIsLogin()) {
+                setPassword("");
+                setConfirmPassword("");
+                setIsGeneratingPassword(false);
+                throw new Error("Aborted due to login state");
+            }
+        };
 
-        for (let i = passwordChars.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [passwordChars[i], passwordChars[j]] = [passwordChars[j], passwordChars[i]];
-        }
+        try {
+            while (passwordChars.length < 16) {
+                await abortIfLogin();
+                passwordChars.push(getRandom(letters));
+                setPassword(passwordChars.join(''));
+                setConfirmPassword(passwordChars.join(''));
+                await delay(120);
 
-        return passwordChars.join('');
+                if (passwordChars.length < 16) {
+                    await abortIfLogin();
+                    passwordChars.push(getRandom(numbers));
+                    setPassword(passwordChars.join(''));
+                    setConfirmPassword(passwordChars.join(''));
+                    await delay(120);
+                }
+
+                if (passwordChars.length < 16) {
+                    await abortIfLogin();
+                    passwordChars.push(getRandom(symbols));
+                    setPassword(passwordChars.join(''));
+                    setConfirmPassword(passwordChars.join(''));
+                    await delay(120);
+                }
+            }
+
+            for (let i = passwordChars.length - 1; i > 0; i--) {
+                await abortIfLogin();
+                const j = Math.floor(Math.random() * (i + 1));
+                [passwordChars[i], passwordChars[j]] = [passwordChars[j], passwordChars[i]];
+                const current = passwordChars.join('');
+                setPassword(current);
+                setConfirmPassword(current);
+                await delay(60);
+            }
+
+            await abortIfLogin();
+            const finalPassword = passwordChars.join('');
+            setPassword(finalPassword);
+            setConfirmPassword(finalPassword);
+            setIsGeneratingPassword(false);
+        } catch {
+            // Nothing to see here
+        }
     };
 
     return (
@@ -201,13 +253,14 @@ const Auth: React.FC = () => {
                         required
                     />
                 </Form.Group>
-                <Form.Group style={{ marginBottom: "4px" }}>
+                <Form.Group >
                     <Form.Control
                         type='text'
                         placeholder='Password'
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        disabled={isGeneratingPassword}
                     />
                     {!isLogin && <PasswordStrengthMeter password={password} />}
                 </Form.Group>
@@ -219,7 +272,8 @@ const Auth: React.FC = () => {
                                 display: "flex",
                                 alignItems: "center",
                                 gap: "12px",
-                                color: "rgb(137, 143, 150)"
+                                color: "rgb(137, 143, 150)",
+                                marginTop: "2px"
                             }}
                         >
                             <Form.Control
@@ -228,16 +282,16 @@ const Auth: React.FC = () => {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 required
+                                disabled={isGeneratingPassword}
                             />
                             or
                             <Button
                                 variant="dark"
                                 type="button"
                                 onClick={() => {
-                                    const generated = generateStrongPassword();
-                                    setPassword(generated);
-                                    setConfirmPassword(generated);
+                                    generateStrongPassword(setPassword, setConfirmPassword, () => isLoginRef.current);
                                 }}
+                                disabled={isGeneratingPassword}
                             >
                                 <FontAwesomeIcon icon={faKey} />
                             </Button>
@@ -248,14 +302,22 @@ const Auth: React.FC = () => {
                             position: "relative",
                             top: "-3px",
                             whiteSpace: "nowrap",
-                            margin: "8px 0 2px 0"
+                            marginTop: "8px"
                         }}>
                             No loot worth stealing here anyway...
                         </p>
                     </>
                 )}
 
-                <Button className='w-100' variant='dark' type='submit'>
+                <Button
+                    className='w-100'
+                    style={{
+                        marginTop: "1rem"
+                    }}
+                    variant='dark'
+                    type='submit'
+                    disabled={isGeneratingPassword}
+                >
                     {isLogin ? "Log in" : "Register"}
                 </Button>
 
@@ -290,7 +352,7 @@ const Auth: React.FC = () => {
                         style={{
                             color: "rgb(25, 135, 84)",
                             cursor: "pointer",
-                            fontSize: "110%"
+                            fontSize: "115%"
                         }}
                         onClick={() => {
                             setIsLogin(!isLogin);
