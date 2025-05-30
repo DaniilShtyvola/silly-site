@@ -6,13 +6,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faFaceSadTear,
     faFaceLaugh,
-    faKey
+    faDice
 } from "@fortawesome/free-solid-svg-icons";
 
 import zxcvbn from "zxcvbn";
 
 import RandomText from "../../components/RandomText/RandomText";
 import PageWrapper from "../../components/PageWrapper/PageWrapper";
+
+import { sendLog } from "../../components/SendLog/SendLog";
 
 const PasswordStrengthMeter: React.FC<{ password: string }> = ({ password }) => {
     const testResult = zxcvbn(password);
@@ -121,35 +123,97 @@ const Auth: React.FC = () => {
         e.preventDefault();
 
         try {
+            const payload = {
+                userName: username,
+                password: password,
+            };
+
             if (isLogin) {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    const contentType = response.headers.get("Content-Type");
+
+                    let errorData: any;
+                    if (contentType && contentType.includes("application/json")) {
+                        errorData = await response.json();
+                    } else {
+                        errorData = await response.text();
+                    }
+
+                    throw { response: { status: response.status, data: errorData } };
+                }
+
+                const data = await response.json();
+                localStorage.setItem("token", data.token);
+
                 setMessage({
                     text: "Login successful!",
                     variant: "success",
                     icon: faFaceLaugh,
                 });
+
                 window.dispatchEvent(new Event("loggedIn"));
+
+                sendLog("The user has logged in.", "info");
             } else {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    const contentType = response.headers.get("Content-Type");
+
+                    let errorData: any;
+                    if (contentType && contentType.includes("application/json")) {
+                        errorData = await response.json();
+                    } else {
+                        errorData = await response.text();
+                    }
+
+                    throw { response: { status: response.status, data: errorData } };
+                }
+
                 setMessage({
-                    text: "Successfully registered! Please confirm your email.",
+                    text: "Successfully registered!",
                     variant: "success",
                     icon: faFaceLaugh,
                 });
+
                 setIsLogin(true);
+
+                sendLog("The user has registered an account.", "info");
             }
 
             setPassword("");
             setConfirmPassword("");
             setUsername("");
         } catch (error: any) {
-            console.error(error);
             let errorText = isLogin ? "Login failed." : "Registration failed.";
 
-            if (
-                isLogin &&
-                error.response?.status === 403 &&
-                typeof error.response.data.detail === "string"
-            ) {
-                errorText = error.response.data.detail;
+            const status = error?.response?.status;
+            const data = error?.response?.data;
+
+            if (status === 401 || status === 403) {
+                if (typeof data === "string") {
+                    errorText = data;
+                } else if (typeof data?.detail === "string") {
+                    errorText = data.detail;
+                }
+            } else if (status === 400 && !isLogin) {
+                if (typeof data === "string") {
+                    errorText = data;
+                }
             }
 
             setMessage({
@@ -293,7 +357,7 @@ const Auth: React.FC = () => {
                                 }}
                                 disabled={isGeneratingPassword}
                             >
-                                <FontAwesomeIcon icon={faKey} />
+                                <FontAwesomeIcon icon={faDice} />
                             </Button>
                         </Form.Group>
                         <p style={{
@@ -316,7 +380,7 @@ const Auth: React.FC = () => {
                     }}
                     variant='dark'
                     type='submit'
-                    disabled={isGeneratingPassword}
+                    disabled={isGeneratingPassword || message?.text != null}
                 >
                     {isLogin ? "Log in" : "Register"}
                 </Button>

@@ -24,7 +24,7 @@ namespace Back.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateLog([FromBody] LogCreateRequest request)
+        public async Task<IActionResult> CreateLog([FromBody] CreateLogRequest request)
         {
             // Get the IP address from the request headers or connection
             var forwardedFor = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
@@ -33,15 +33,14 @@ namespace Back.Controllers
             // Get the JWT token from the Authorization header
             var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
-            VisitorInfo? visitorInfo = null;
+            SessionInfo? SessionInfo = null;
 
             if (!string.IsNullOrEmpty(token))
             {
-                // If a token is present, validate it and extract the username
                 try
                 {
                     var handler = new JwtSecurityTokenHandler();
-                    var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);  // Get the secret key from config
+                    var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
                     var tokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = false,
@@ -51,12 +50,13 @@ namespace Back.Controllers
                     };
 
                     var principal = handler.ValidateToken(token, tokenValidationParameters, out var validatedToken);
-                    var username = principal?.Identity?.Name;
+                    var username = principal.Claims.FirstOrDefault(c => c.Type == "userName")?.Value;
+
+                    Console.WriteLine($"Username from token: {username}");
 
                     if (username != null)
                     {
-                        // Search for an existing VisitorInfo based on session data
-                        visitorInfo = await _context.VisitorInfos
+                        SessionInfo = await _context.SessionInfos
                             .Where(v => v.UserAgent == request.ClientInfo.UserAgent &&
                                         v.Language == request.ClientInfo.Language &&
                                         v.Platform == request.ClientInfo.Platform &&
@@ -64,60 +64,58 @@ namespace Back.Controllers
                                         v.IpAddress == ip)
                             .FirstOrDefaultAsync();
 
-                        if (visitorInfo != null)
+                        if (SessionInfo != null)
                         {
-                            // Check if VisitorInfo already has a UserId
-                            if (!visitorInfo.UserId.HasValue)
-                            {
-                                // If UserId is null, set it from the JWT token
-                                var user = await _context.Users
-                                    .Where(u => u.UserName == username)
-                                    .FirstOrDefaultAsync();
+                            Console.WriteLine($"Found SessionInfo with UserId: {SessionInfo.UserId}");
 
-                                if (user != null)
-                                {
-                                    visitorInfo.UserId = user.Id;
-                                    _context.VisitorInfos.Update(visitorInfo);
-                                    await _context.SaveChangesAsync();
-                                }
+                            var user = await _context.Users
+                                .Where(u => u.UserName == username)
+                                .FirstOrDefaultAsync();
+
+                            if (user == null)
+                            {
+                                Console.WriteLine("User not found in DB");
                             }
                             else
                             {
-                                // If UserId is set, ensure it matches the user in the token
-                                var user = await _context.Users
-                                    .Where(u => u.UserName == username)
-                                    .FirstOrDefaultAsync();
-
-                                if (user != null && visitorInfo.UserId != user.Id)
+                                if (!SessionInfo.UserId.HasValue)
                                 {
-                                    // Create a new VisitorInfo if UserId does not match
-                                    visitorInfo = new VisitorInfo
+                                    SessionInfo.UserId = user.Id;
+                                    _context.SessionInfos.Update(SessionInfo);
+                                    await _context.SaveChangesAsync();
+                                    Console.WriteLine($"Updated SessionInfo.UserId to {user.Id}");
+                                }
+                                else if (SessionInfo.UserId != user.Id)
+                                {
+                                    // Create new SessionInfo if UserId mismatch
+                                    SessionInfo = new SessionInfo
                                     {
                                         UserAgent = request.ClientInfo.UserAgent,
                                         Language = request.ClientInfo.Language,
                                         Platform = request.ClientInfo.Platform,
                                         Timezone = request.ClientInfo.Timezone,
                                         IpAddress = ip ?? "unknown",
-                                        UserId = user.Id  // Set the correct UserId from the token
+                                        UserId = user.Id
                                     };
-
-                                    _context.VisitorInfos.Add(visitorInfo);
+                                    _context.SessionInfos.Add(SessionInfo);
                                     await _context.SaveChangesAsync();
+                                    Console.WriteLine("Created new SessionInfo with correct UserId");
                                 }
                             }
                         }
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"Token validation error: {ex.Message}");
                     return Unauthorized(new { message = "Invalid token" });
                 }
             }
 
-            // If no token is provided or token validation failed, find or create VisitorInfo
-            if (visitorInfo == null)
+            // If no token is provided or token validation failed, find or create SessionInfo
+            if (SessionInfo == null)
             {
-                visitorInfo = await _context.VisitorInfos
+                SessionInfo = await _context.SessionInfos
                     .Where(v => v.UserAgent == request.ClientInfo.UserAgent &&
                                 v.Language == request.ClientInfo.Language &&
                                 v.Platform == request.ClientInfo.Platform &&
@@ -125,10 +123,10 @@ namespace Back.Controllers
                                 v.IpAddress == ip)
                     .FirstOrDefaultAsync();
 
-                if (visitorInfo == null)
+                if (SessionInfo == null)
                 {
-                    // Create a new VisitorInfo for a new visitor if none found
-                    visitorInfo = new VisitorInfo
+                    // Create a new SessionInfo for a new Session if none found
+                    SessionInfo = new SessionInfo
                     {
                         UserAgent = request.ClientInfo.UserAgent,
                         Language = request.ClientInfo.Language,
@@ -136,15 +134,15 @@ namespace Back.Controllers
                         Timezone = request.ClientInfo.Timezone,
                         IpAddress = ip ?? "unknown"
                     };
-                    _context.VisitorInfos.Add(visitorInfo);
+                    _context.SessionInfos.Add(SessionInfo);
                     await _context.SaveChangesAsync();
                 }
             }
 
-            // Create the log entry associated with the found VisitorInfo
+            // Create the log entry associated with the found SessionInfo
             var log = new Log
             {
-                VisitorInfoId = visitorInfo.Id,  // Associate the log with the VisitorInfo
+                SessionInfoId = SessionInfo.Id,  // Associate the log with the SessionInfo
                 Message = request.Message,
                 LogType = request.LogType,
                 CreatedAt = DateTime.UtcNow  // Set the log creation timestamp

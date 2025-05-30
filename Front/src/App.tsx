@@ -8,6 +8,9 @@ import EaseOutWrapper from "./components/EaseOutWrapper/EaseOutWrapper";
 
 import Home from "./pages/Home/Home";
 import Auth from "./pages/Auth/Auth";
+//import Profile from "./pages/Profile/Profile";
+
+import { sendLog } from "./components/SendLog/SendLog";
 
 function App() {
     const [isLoadingEnded, setLoadingEnded] = useState(false);
@@ -24,6 +27,9 @@ function App() {
 
         if (!isFirstVisit) {
             setLoadingEnded(true);
+        } else {
+            localStorage.clear();
+            sendLog("The user created a new session.", "info");
         }
     }, []);
 
@@ -44,7 +50,8 @@ function App() {
                     </EaseOutWrapper>
                     <Routes>
                         <Route path="/cats" element={<Home />} />
-                        <Route path="/login" element={<Auth/ >} />
+                        <Route path="/login" element={<Auth />} />
+                        {/* <Route path="/profile" element={<Profile/ >} /> */}
                     </Routes>
                 </Router>
             )}

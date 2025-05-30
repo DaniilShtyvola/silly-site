@@ -16,5 +16,4 @@ public class Cat
     public List<CatImage> Images { get; set; }
     public List<CatSocialLink> SocialLinks { get; set; }
     public List<CatComment> Comments { get; set; }
-    public List<CatReaction> Reactions { get; set; }
 }

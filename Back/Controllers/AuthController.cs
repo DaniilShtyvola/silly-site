@@ -8,6 +8,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Controllers
 {
@@ -24,19 +25,10 @@ namespace Controllers
             _jwtSettings = jwtSettings.Value;
         }
 
-        [HttpPost("register-user")]
+        [HttpPost("register")]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
         {
             return await Register(request, false);
-        }
-
-        [HttpPost("register-admin")]
-        public async Task<IActionResult> RegisterAdmin([FromBody] RegisterRequest request, [FromHeader] string? adminToken)
-        {
-            if (string.IsNullOrEmpty(adminToken) || !IsAdmin(adminToken))
-                return Unauthorized("Only admins can create other admins.");
-
-            return await Register(request, true);
         }
 
         [HttpPost("login")]
@@ -60,7 +52,7 @@ namespace Controllers
         {
             // Check if the username already exists
             if (await _context.Users.AnyAsync(u => u.UserName == request.UserName))
-                return BadRequest("A user with this username already exists.");
+                return BadRequest("This username is already taken.");
 
             var passwordHash = HashPassword(request.Password);
 
@@ -78,21 +70,6 @@ namespace Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { Message = isAdmin ? "Admin registered successfully." : "User registered successfully." });
-        }
-
-        private bool IsAdmin(string token)
-        {
-            try
-            {
-                var handler = new JwtSecurityTokenHandler();
-                var jwtToken = handler.ReadJwtToken(token);
-                var adminClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "isAdmin");
-                return adminClaim != null && adminClaim.Value == "true";
-            }
-            catch
-            {
-                return false;
-            }
         }
         private string HashPassword(string password)
         {
@@ -143,7 +120,7 @@ namespace Controllers
                 claims: claims,
                 expires: DateTime.UtcNow.AddDays(1),
                 signingCredentials: creds
-                );
+            );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }

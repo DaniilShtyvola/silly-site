@@ -18,11 +18,6 @@ public class CatsController : ControllerBase
     private bool UserIsAdmin() =>
         User.Claims.FirstOrDefault(c => c.Type == "isAdmin")?.Value == "true";
 
-    private string? GetUserName()
-    {
-        return User.Claims.FirstOrDefault(c => c.Type == "userName")?.Value;
-    }
-
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -32,6 +27,7 @@ public class CatsController : ControllerBase
             .ToListAsync();
         return Ok(cats);
     }
+
     [HttpGet("minimized")]
     public async Task<ActionResult<List<CatMinimizedResponse>>> GetAllMinimized()
     {
@@ -50,24 +46,64 @@ public class CatsController : ControllerBase
     }
 
     [HttpGet("{normalizedName}")]
-    public async Task<ActionResult<Cat>> GetCatByNormalizedName(string normalizedName)
+    public async Task<ActionResult<CatResponse>> GetCatByNormalizedName(string normalizedName)
     {
         var cat = await _context.Cats
             .Include(c => c.Images)
             .Include(c => c.SocialLinks)
             .Include(c => c.Comments)
-            .Include(c => c.Reactions)
+                .ThenInclude(comment => comment.User)
             .FirstOrDefaultAsync(c => c.NormalizedName == normalizedName);
 
         if (cat == null)
             return NotFound();
 
-        return Ok(cat);
+        var catReactions = await _context.Reactions
+            .Where(r => r.TargetType == "Cat" && r.TargetId == cat.Id)
+            .Include(r => r.User)
+            .ToListAsync();
+
+        var commentIds = cat.Comments.Select(c => c.Id).ToList();
+        var commentReactions = await _context.Reactions
+            .Where(r => r.TargetType == "Comment" && commentIds.Contains(r.TargetId))
+            .Include(r => r.User)
+            .ToListAsync();
+
+        var response = new CatResponse
+        {
+            Name = cat.Name,
+            Description = cat.Description,
+            NormalizedName = cat.NormalizedName,
+            Images = cat.Images.Select(i => new ImageResponse { Base64 = i.Base64Data }).ToList(),
+            Reactions = catReactions.Select(r => new ReactionResponse
+            {
+                Id = r.Id,
+                UserName = r.User?.UserName ?? "Unknown",
+                Type = r.Type
+            }).ToList(),
+            Comments = cat.Comments.Select(c => new CommentResponse
+            {
+                Id = c.Id,
+                UserName = c.User?.UserName ?? "Unknown",
+                Text = c.Text,
+                CreatedAt = c.CreatedAt,
+                Reactions = commentReactions
+                    .Where(r => r.TargetId == c.Id)
+                    .Select(r => new ReactionResponse
+                    {
+                        Id = r.Id,
+                        UserName = r.User?.UserName ?? "Unknown",
+                        Type = r.Type
+                    }).ToList()
+            }).ToList()
+        };
+
+        return Ok(response);
     }
 
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> Create([FromBody] CatCreateRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateCatRequest request)
     {
         if (!UserIsAdmin()) return Forbid();
 
@@ -100,7 +136,7 @@ public class CatsController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize]
-    public async Task<IActionResult> Update(Guid id, [FromBody] CatUpdateRequest request)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCatRequest request)
     {
         if (!UserIsAdmin()) return Forbid();
 
@@ -147,58 +183,5 @@ public class CatsController : ControllerBase
         _context.Cats.Remove(cat);
         await _context.SaveChangesAsync();
         return NoContent();
-    }
-
-    [HttpPost("{id}/reaction")]
-    [Authorize]
-    public async Task<IActionResult> AddReaction(Guid id, [FromBody] CatReactionRequest request)
-    {
-        var userName = GetUserName();
-        if (userName == null) return Unauthorized();
-
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
-        if (user == null) return Unauthorized();
-
-        var cat = await _context.Cats.FindAsync(id);
-        if (cat == null) return NotFound();
-
-        var reaction = new CatReaction
-        {
-            Id = Guid.NewGuid(),
-            CatId = id,
-            UserId = user.Id,
-            Type = request.Type
-        };
-
-        _context.CatReactions.Add(reaction);
-        await _context.SaveChangesAsync();
-        return Ok(reaction);
-    }
-
-    [HttpPost("{id}/comment")]
-    [Authorize]
-    public async Task<IActionResult> AddComment(Guid id, [FromBody] CatCommentRequest request)
-    {
-        var userName = GetUserName();
-        if (userName == null) return Unauthorized();
-
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
-        if (user == null) return Unauthorized();
-
-        var cat = await _context.Cats.FindAsync(id);
-        if (cat == null) return NotFound();
-
-        var comment = new CatComment
-        {
-            Id = Guid.NewGuid(),
-            CatId = id,
-            UserId = user.Id,
-            Text = request.Text,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.CatComments.Add(comment);
-        await _context.SaveChangesAsync();
-        return Ok(comment);
     }
 }

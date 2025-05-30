@@ -65,7 +65,7 @@ using (var scope = app.Services.CreateScope())
     {
         var admin = new User
         {
-            UserName = "DanyaAdmin",
+            UserName = "Danya",
             PasswordHash = HashPassword("Mh8A0*"),
             IsAdmin = true,
             CreatedAt = DateTime.UtcNow,
