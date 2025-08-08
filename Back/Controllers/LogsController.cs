@@ -20,113 +20,65 @@ namespace Back.Controllers
         public LogsController(MainDbContext context, IOptions<JwtSettings> jwtSettings)
         {
             _context = context;
-            _jwtSettings = jwtSettings.Value;  // Access the secret key from the configuration
+            _jwtSettings = jwtSettings.Value;
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateLog([FromBody] CreateLogRequest request)
         {
-            // Get the IP address from the request headers or connection
-            var forwardedFor = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-            var ip = forwardedFor ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+            if (request?.ClientInfo == null)
+                return BadRequest("Missing client info.");
 
-            // Get the JWT token from the Authorization header
-            var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var ip = GetClientIp();
+            var token = GetJwtTokenFromHeader();
+            SessionInfo? session = null;
 
-            SessionInfo? SessionInfo = null;
+            string? userName = null;
 
             if (!string.IsNullOrEmpty(token))
             {
-                try
+                var principal = ValidateJwtToken(token);
+                userName = principal?.Claims.FirstOrDefault(c => c.Type == "userName")?.Value;
+
+                if (!string.IsNullOrEmpty(userName))
                 {
-                    var handler = new JwtSecurityTokenHandler();
-                    var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
-                    var tokenValidationParameters = new TokenValidationParameters
+                    var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
+                    if (user != null)
                     {
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-                        ValidateLifetime = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(key)
-                    };
+                        session = await FindMatchingSession(request, ip);
 
-                    var principal = handler.ValidateToken(token, tokenValidationParameters, out var validatedToken);
-                    var username = principal.Claims.FirstOrDefault(c => c.Type == "userName")?.Value;
-
-                    Console.WriteLine($"Username from token: {username}");
-
-                    if (username != null)
-                    {
-                        SessionInfo = await _context.SessionInfos
-                            .Where(v => v.UserAgent == request.ClientInfo.UserAgent &&
-                                        v.Language == request.ClientInfo.Language &&
-                                        v.Platform == request.ClientInfo.Platform &&
-                                        v.Timezone == request.ClientInfo.Timezone &&
-                                        v.IpAddress == ip)
-                            .FirstOrDefaultAsync();
-
-                        if (SessionInfo != null)
+                        if (session == null || session.UserId != user.Id)
                         {
-                            Console.WriteLine($"Found SessionInfo with UserId: {SessionInfo.UserId}");
-
-                            var user = await _context.Users
-                                .Where(u => u.UserName == username)
-                                .FirstOrDefaultAsync();
-
-                            if (user == null)
+                            session = new SessionInfo
                             {
-                                Console.WriteLine("User not found in DB");
-                            }
-                            else
-                            {
-                                if (!SessionInfo.UserId.HasValue)
-                                {
-                                    SessionInfo.UserId = user.Id;
-                                    _context.SessionInfos.Update(SessionInfo);
-                                    await _context.SaveChangesAsync();
-                                    Console.WriteLine($"Updated SessionInfo.UserId to {user.Id}");
-                                }
-                                else if (SessionInfo.UserId != user.Id)
-                                {
-                                    // Create new SessionInfo if UserId mismatch
-                                    SessionInfo = new SessionInfo
-                                    {
-                                        UserAgent = request.ClientInfo.UserAgent,
-                                        Language = request.ClientInfo.Language,
-                                        Platform = request.ClientInfo.Platform,
-                                        Timezone = request.ClientInfo.Timezone,
-                                        IpAddress = ip ?? "unknown",
-                                        UserId = user.Id
-                                    };
-                                    _context.SessionInfos.Add(SessionInfo);
-                                    await _context.SaveChangesAsync();
-                                    Console.WriteLine("Created new SessionInfo with correct UserId");
-                                }
-                            }
+                                UserAgent = request.ClientInfo.UserAgent,
+                                Language = request.ClientInfo.Language,
+                                Platform = request.ClientInfo.Platform,
+                                Timezone = request.ClientInfo.Timezone,
+                                IpAddress = ip ?? "unknown",
+                                UserId = user.Id
+                            };
+
+                            _context.SessionInfos.Add(session);
+                            await _context.SaveChangesAsync();
+                        }
+                        else if (!session.UserId.HasValue)
+                        {
+                            session.UserId = user.Id;
+                            _context.SessionInfos.Update(session);
+                            await _context.SaveChangesAsync();
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Token validation error: {ex.Message}");
-                    return Unauthorized(new { message = "Invalid token" });
-                }
             }
 
-            // If no token is provided or token validation failed, find or create SessionInfo
-            if (SessionInfo == null)
+            if (session == null)
             {
-                SessionInfo = await _context.SessionInfos
-                    .Where(v => v.UserAgent == request.ClientInfo.UserAgent &&
-                                v.Language == request.ClientInfo.Language &&
-                                v.Platform == request.ClientInfo.Platform &&
-                                v.Timezone == request.ClientInfo.Timezone &&
-                                v.IpAddress == ip)
-                    .FirstOrDefaultAsync();
+                session = await FindMatchingSession(request, ip);
 
-                if (SessionInfo == null)
+                if (session == null)
                 {
-                    // Create a new SessionInfo for a new Session if none found
-                    SessionInfo = new SessionInfo
+                    session = new SessionInfo
                     {
                         UserAgent = request.ClientInfo.UserAgent,
                         Language = request.ClientInfo.Language,
@@ -134,24 +86,70 @@ namespace Back.Controllers
                         Timezone = request.ClientInfo.Timezone,
                         IpAddress = ip ?? "unknown"
                     };
-                    _context.SessionInfos.Add(SessionInfo);
+                    _context.SessionInfos.Add(session);
                     await _context.SaveChangesAsync();
                 }
             }
 
-            // Create the log entry associated with the found SessionInfo
             var log = new Log
             {
-                SessionInfoId = SessionInfo.Id,  // Associate the log with the SessionInfo
+                SessionInfoId = session.Id,
                 Message = request.Message,
                 LogType = request.LogType,
-                CreatedAt = DateTime.UtcNow  // Set the log creation timestamp
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.Logs.Add(log);
             await _context.SaveChangesAsync();
 
             return Ok(new { success = true });
+        }
+
+        private string GetClientIp()
+        {
+            return HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault()
+                ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+        }
+
+        private string GetJwtTokenFromHeader()
+        {
+            return HttpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        }
+
+        private ClaimsPrincipal ValidateJwtToken(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
+
+            var parameters = new TokenValidationParameters
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuerSigningKey = true
+            };
+
+            var principal = handler.ValidateToken(token, parameters, out var validatedToken);
+
+            if (validatedToken is not JwtSecurityToken jwtToken ||
+                jwtToken.Header.Alg != SecurityAlgorithms.HmacSha256)
+            {
+                throw new SecurityTokenException("Invalid token algorithm");
+            }
+
+            return principal;
+        }
+
+        private async Task<SessionInfo?> FindMatchingSession(CreateLogRequest request, string? ip)
+        {
+            return await _context.SessionInfos.FirstOrDefaultAsync(v =>
+                v.UserAgent == request.ClientInfo.UserAgent &&
+                v.Language == request.ClientInfo.Language &&
+                v.Platform == request.ClientInfo.Platform &&
+                v.Timezone == request.ClientInfo.Timezone &&
+                v.IpAddress == ip
+            );
         }
     }
 }

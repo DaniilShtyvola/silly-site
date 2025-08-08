@@ -1,4 +1,5 @@
 ﻿public class SetAvatarRequest
 {
-    public string AvatarBase64 { get; set; } = string.Empty;
+    public string AvatarIcon { get; set; } = "faUser";
+    public string AvatarColor { get; set; } = "#898F96";
 }

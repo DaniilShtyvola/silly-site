@@ -45,7 +45,13 @@ public class UserController : ControllerBase
         if (user == null)
             return NotFound("User not found.");
 
-        return Ok(new { AvatarBase64 = user.AvatarBase64 });
+        var response = new AvatarResponse
+        {
+            AvatarIcon = user.AvatarIcon,
+            AvatarColor = user.AvatarColor
+        };
+
+        return Ok(response);
     }
 
     [HttpPost("avatar")]
@@ -59,7 +65,9 @@ public class UserController : ControllerBase
         if (user == null)
             return NotFound("User not found.");
 
-        user.AvatarBase64 = request.AvatarBase64;
+        user.AvatarIcon = request.AvatarIcon;
+        user.AvatarColor = request.AvatarColor;
+
         _context.Users.Update(user);
         _context.SaveChanges();
 
@@ -78,37 +86,59 @@ public class UserController : ControllerBase
         if (user == null)
             return NotFound("User not found.");
 
-        var catReactionCount = await _context.Reactions
-            .CountAsync(r => r.UserId == user.Id && r.TargetType == "Cat");
+        var commentsCount = await _context.Comments
+            .CountAsync(c => c.UserId == user.Id);
 
-        var userCommentIds = await _context.CatComments
+        var lastComments = await _context.Comments
+            .Where(c => c.UserId == user.Id)
+            .OrderByDescending(c => c.CreatedAt)
+            .Take(3)
+            .ToListAsync();
+
+        var lastCommentIds = lastComments.Select(c => c.Id).ToList();
+
+        var reactionsToLastComments = await _context.Reactions
+            .Where(r => r.CommentId != null && lastCommentIds.Contains(r.CommentId.Value))
+            .GroupBy(r => new { r.CommentId, r.Type })
+            .Select(g => new { g.Key.CommentId, g.Key.Type, Count = g.Count() })
+            .ToListAsync();
+
+        var lastCommentDtos = lastComments.Select(comment => new UserCommentDto
+        {
+            Id = comment.Id,
+            Text = comment.Text,
+            CreatedAt = comment.CreatedAt,
+            Reactions = reactionsToLastComments
+                .Where(r => r.CommentId == comment.Id)
+                .ToDictionary(r => r.Type, r => r.Count)
+        }).ToList();
+
+        var userCommentIds = await _context.Comments
             .Where(c => c.UserId == user.Id)
             .Select(c => c.Id)
             .ToListAsync();
 
-        var receivedReactionsCount = await _context.Reactions
-            .CountAsync(r => r.TargetType == "Comment" && userCommentIds.Contains(r.TargetId));
+        var receivedReactions = await _context.Reactions
+            .Where(r => r.CommentId != null && userCommentIds.Contains(r.CommentId.Value))
+            .GroupBy(r => r.Type)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.Key, g => g.Count);
 
-        var latestComments = await _context.CatComments
-            .Where(c => c.UserId == user.Id)
-            .OrderByDescending(c => c.CreatedAt)
-            .Take(3)
-            .Include(c => c.Cat)
-            .Select(c => new CommentMinimizedResponse
-            {
-                Id = c.Id,
-                Text = c.Text,
-                CreatedAt = c.CreatedAt,
-                CatNormalizedName = c.Cat.NormalizedName
-            })
-            .ToListAsync();
+        var givenReactions = await _context.Reactions
+            .Where(r => r.UserId == user.Id)
+            .GroupBy(r => r.Type)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.Key, g => g.Count);
 
         var response = new UserInfoResponse
         {
             RegisteredAt = user.CreatedAt,
-            CatReactionsCount = catReactionCount,
-            ReceivedReactionsOnCommentsCount = receivedReactionsCount,
-            LatestComments = latestComments
+            CommentsCount = commentsCount,
+            LastComments = lastCommentDtos,
+            ReceivedReactionsCountByType = receivedReactions,
+            UserReactionsCountByType = givenReactions,
+            AvatarIcon = user.AvatarIcon ?? "faUser",
+            AvatarColor = user.AvatarColor ?? "#898F96"
         };
 
         return Ok(response);

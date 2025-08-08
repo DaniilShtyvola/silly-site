@@ -6,13 +6,16 @@ import { Navbar, Nav } from "react-bootstrap";
 
 import { FontAwesomeIcon, FontAwesomeIconProps } from "@fortawesome/react-fontawesome";
 import {
-    faCat,
+    faNewspaper,
     faScrewdriverWrench,
     faCode,
     faTurnUp,
     faLocationDot,
-    faRightToBracket
+    faRightToBracket,
+    faUser
 } from "@fortawesome/free-solid-svg-icons";
+
+import useAuthAvatar from '../../hooks/UseAuthAvatar';
 
 import RandomText from "../RandomText/RandomText";
 import EaseOutWrapper from "../EaseOutWrapper/EaseOutWrapper";
@@ -51,10 +54,7 @@ interface PageHeaderProps { }
 const PageHeader: FC<PageHeaderProps> = () => {
     const location = useLocation();
 
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-    const [avatar, setAvatar] = useState<string | null>(null);
-    const [username, setUsername] = useState<string | null>(null);
-    const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+    const { avatar, isAuthenticated, username, isAdmin } = useAuthAvatar();
 
     const [hoverState, setHoverState] = useState<{ text: string; link: string }>({
         text: 'Hover over a link to get more info...',
@@ -79,88 +79,12 @@ const PageHeader: FC<PageHeaderProps> = () => {
     };
 
     useEffect(() => {
-        const processLogin = async (token: string) => {
-            try {
-                const tokenPayload = JSON.parse(atob(token.split('.')[1]));
-
-                const userNameFromToken = tokenPayload.userName;
-                if (userNameFromToken) {
-                    setUsername(userNameFromToken);
-                }
-
-                const userIsAdmin = tokenPayload.isAdmin;
-                if (userIsAdmin) {
-                    setIsAdmin(userIsAdmin);
-                }
-            } catch (err) {
-                console.error("Failed to parse token", err);
-            }
-
-            const storedAvatar = localStorage.getItem("avatar");
-            if (storedAvatar) {
-                setAvatar(storedAvatar);
-                setIsAuthenticated(true);
-                return;
-            }
-
-            try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/get-avatar`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        token: token
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error("Failed to fetch avatar");
-                }
-
-                const data = await response.json();
-
-                if (data.avatarBase64) {
-                    localStorage.setItem("avatar", data.avatarBase64);
-                    setAvatar(data.avatarBase64);
-                }
-
-                setIsAuthenticated(true);
-            } catch (error) {
-                console.error("Something happened while trying to fetch an avatar. :(", error);
-            }
-        };
-
-        const token = localStorage.getItem("token");
-
-        if (token) {
-            processLogin(token);
-        } else {
-            const handleLoggedIn = async () => {
-                const newToken = localStorage.getItem("token");
-                if (newToken) {
-                    await processLogin(newToken);
-                }
-            };
-
-            window.addEventListener("loggedIn", handleLoggedIn);
-
-            return () => {
-                window.removeEventListener("loggedIn", handleLoggedIn);
-            };
-        }
-    }, []);
-
-    useEffect(() => {
         return () => {
             if (hoverTimer) {
                 clearTimeout(hoverTimer);
             }
         };
     }, [hoverTimer]);
-
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        setIsAuthenticated(!!token);
-    }, [location]);
 
     return (
         <>
@@ -178,8 +102,8 @@ const PageHeader: FC<PageHeaderProps> = () => {
                         flexDirection: "row"
                     }}
                 >
-                    <CustomNavLink link={"/cats"} icon={faCat} text={"Cats"} tooltip={"Meet the silliest cats in the world!"} onHover={handleHover} />
-                    <CustomNavLink link={"/creator"} icon={faCode} text={"Catfather"} tooltip={"Find out who made that mess."} onHover={handleHover} />
+                    <CustomNavLink link={"/board"} icon={faNewspaper} text={"Board"} tooltip={"Meet the silliest cats in the world!"} onHover={handleHover} />
+                    <CustomNavLink link={"/creator"} icon={faCode} text={"Creator"} tooltip={"Find out who made that mess."} onHover={handleHover} />
                     {isAdmin && (
                         <CustomNavLink link={"/admin"} icon={faScrewdriverWrench} text={"Admin"} tooltip={"Manage and oversee everything here."} onHover={handleHover} />
                     )}
@@ -206,9 +130,7 @@ const PageHeader: FC<PageHeaderProps> = () => {
                                 }}
                             >
                                 <Link to="/profile">
-                                    <img
-                                        src={`data:image/jpeg;base64,${avatar}`}
-                                        alt="avatar"
+                                    <div
                                         style={{
                                             width: 44,
                                             height: 44,
@@ -217,11 +139,24 @@ const PageHeader: FC<PageHeaderProps> = () => {
                                             left: "-18px",
                                             top: "-9px",
                                             border: "rgb(43, 48, 52) solid 1px",
-                                            cursor: "pointer"
+                                            cursor: "pointer",
+                                            backgroundColor: "rgb(23, 25, 27)",
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center"
                                         }}
                                         onMouseEnter={() => handleHover("Your profile needs more SSStyle!", "/profile")}
                                         onMouseLeave={() => handleHover('', '')}
-                                    />
+                                    >
+                                        <FontAwesomeIcon
+                                            icon={avatar ? avatar.icon : faUser}
+                                            style={{
+                                                color: avatar ? `#${avatar.color}` : "rgb(137, 143, 150)",
+                                                position: "relative",
+                                                fontSize: "22px"
+                                            }}
+                                        />
+                                    </div>
                                 </Link>
                             </div>
                         </div>

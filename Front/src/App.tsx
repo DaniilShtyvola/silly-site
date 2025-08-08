@@ -6,11 +6,11 @@ import PageHeader from "./components/PageHeader/PageHeader";
 import PageWrapper from "./components/PageWrapper/PageWrapper";
 import EaseOutWrapper from "./components/EaseOutWrapper/EaseOutWrapper";
 
-import Home from "./pages/Home/Home";
+import Board from "./pages/Home/Board";
 import Auth from "./pages/Auth/Auth";
 //import Profile from "./pages/Profile/Profile";
 
-import { sendLog } from "./components/SendLog/SendLog";
+import { sendLog } from "./utils/SendLog";
 
 function App() {
     const [isLoadingEnded, setLoadingEnded] = useState(false);
@@ -49,7 +49,8 @@ function App() {
                         <PageHeader />
                     </EaseOutWrapper>
                     <Routes>
-                        <Route path="/cats" element={<Home />} />
+                        <Route path="/" element={<></>} />
+                        <Route path="/board" element={<Board />} />
                         <Route path="/login" element={<Auth />} />
                         {/* <Route path="/profile" element={<Profile/ >} /> */}
                     </Routes>

@@ -9,6 +9,8 @@ public class User
     public bool IsAdmin { get; set; } = false;
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLogin { get; set; }
-    public string? AvatarBase64 { get; set; }
-    public ICollection<SessionInfo> SessionInfos { get; set; } = new List<SessionInfo>();
+    public string? AvatarIcon { get; set; }
+    [MaxLength(6)]
+    public string? AvatarColor { get; set; }
+    public ICollection<SessionInfo> SessionInfos { get; set; } = [];
 }

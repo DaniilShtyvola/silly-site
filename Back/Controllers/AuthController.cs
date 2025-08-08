@@ -7,8 +7,6 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
-using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Controllers
 {
@@ -35,12 +33,12 @@ namespace Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == request.UserName);
+
             if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
                 return Unauthorized("Invalid username or password.");
 
             var token = GenerateJwtToken(user);
 
-            // Update the LastLogin field when the user successfully logs in
             user.LastLogin = DateTime.UtcNow;
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
@@ -50,9 +48,23 @@ namespace Controllers
 
         private async Task<IActionResult> Register(RegisterRequest request, bool isAdmin)
         {
-            // Check if the username already exists
             if (await _context.Users.AnyAsync(u => u.UserName == request.UserName))
                 return BadRequest("This username is already taken.");
+
+            if (string.IsNullOrWhiteSpace(request.UserName))
+                return BadRequest("Username cannot be empty or whitespace.");
+
+            if (request.UserName != request.UserName.Trim())
+                return BadRequest("Username cannot start or end with spaces.");
+
+            if (request.UserName.Contains(" "))
+                return BadRequest("Username cannot contain spaces.");
+
+            if (request.UserName.Length < 6)
+                return BadRequest("Username must be at least 6 characters long.");
+
+            if (request.Password != request.Password.Trim())
+                return BadRequest("Password cannot start or end with spaces.");
 
             var passwordHash = HashPassword(request.Password);
 
@@ -62,8 +74,9 @@ namespace Controllers
                 PasswordHash = passwordHash,
                 IsAdmin = isAdmin,
                 CreatedAt = DateTime.UtcNow,
-                LastLogin = null, // Set LastLogin as null by default
-                AvatarBase64 = ""
+                LastLogin = null,
+                AvatarIcon = "faUser",
+                AvatarColor = "#898F96"
             };
 
             await _context.Users.AddAsync(user);

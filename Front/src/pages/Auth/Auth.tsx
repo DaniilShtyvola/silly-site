@@ -9,12 +9,13 @@ import {
     faDice
 } from "@fortawesome/free-solid-svg-icons";
 
+import axios from "axios";
 import zxcvbn from "zxcvbn";
 
 import RandomText from "../../components/RandomText/RandomText";
 import PageWrapper from "../../components/PageWrapper/PageWrapper";
 
-import { sendLog } from "../../components/SendLog/SendLog";
+import { sendLog } from "../../utils/SendLog";
 
 const PasswordStrengthMeter: React.FC<{ password: string }> = ({ password }) => {
     const testResult = zxcvbn(password);
@@ -68,6 +69,7 @@ const PasswordStrengthMeter: React.FC<{ password: string }> = ({ password }) => 
                     height: "4px",
                     flex: 1,
                     borderRadius: "4px",
+                    marginTop: "2px",
                     backgroundColor: "rgb(33, 37, 41)",
                 }}
                 variant="custom"
@@ -83,19 +85,18 @@ const PasswordStrengthMeter: React.FC<{ password: string }> = ({ password }) => 
             </ProgressBar>
             <p style={{
                 color: "rgb(137, 143, 150)",
-                fontSize: "70%",
+                fontSize: "9px",
                 textAlign: "right",
                 position: "relative",
                 top: "-3px",
                 marginRight: "4px",
                 whiteSpace: "nowrap"
             }}>
-                <RandomText text={getLabel()} speed={10} />
+                <RandomText text={getLabel()} speed={15} />
             </p>
         </div>
     );
 };
-
 
 const Auth: React.FC = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -122,6 +123,47 @@ const Auth: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!isLogin) {
+            const trimmedUsername = username.trim();
+            const trimmedPassword = password.trim();
+
+            if (trimmedUsername.length < 6) {
+                setMessage({
+                    text: "Username must be at least 6 characters long.",
+                    variant: "danger",
+                    icon: faFaceSadTear,
+                });
+                return;
+            }
+
+            if (username !== trimmedUsername) {
+                setMessage({
+                    text: "Username cannot start or end with spaces.",
+                    variant: "danger",
+                    icon: faFaceSadTear,
+                });
+                return;
+            }
+
+            if (username.includes(" ")) {
+                setMessage({
+                    text: "Username cannot contain spaces.",
+                    variant: "danger",
+                    icon: faFaceSadTear,
+                });
+                return;
+            }
+
+            if (password !== trimmedPassword) {
+                setMessage({
+                    text: "Password cannot start or end with spaces.",
+                    variant: "danger",
+                    icon: faFaceSadTear,
+                });
+                return;
+            }
+        }
+
         try {
             const payload = {
                 userName: username,
@@ -129,28 +171,9 @@ const Auth: React.FC = () => {
             };
 
             if (isLogin) {
-                const response = await fetch(`${API_URL}/auth/login`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(payload),
-                });
+                const response = await axios.post(`${API_URL}/auth/login`, payload);
+                const data = response.data;
 
-                if (!response.ok) {
-                    const contentType = response.headers.get("Content-Type");
-
-                    let errorData: any;
-                    if (contentType && contentType.includes("application/json")) {
-                        errorData = await response.json();
-                    } else {
-                        errorData = await response.text();
-                    }
-
-                    throw { response: { status: response.status, data: errorData } };
-                }
-
-                const data = await response.json();
                 localStorage.setItem("token", data.token);
 
                 setMessage({
@@ -160,29 +183,9 @@ const Auth: React.FC = () => {
                 });
 
                 window.dispatchEvent(new Event("loggedIn"));
-
                 sendLog("The user has logged in.", "info");
             } else {
-                const response = await fetch(`${API_URL}/auth/register`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(payload),
-                });
-
-                if (!response.ok) {
-                    const contentType = response.headers.get("Content-Type");
-
-                    let errorData: any;
-                    if (contentType && contentType.includes("application/json")) {
-                        errorData = await response.json();
-                    } else {
-                        errorData = await response.text();
-                    }
-
-                    throw { response: { status: response.status, data: errorData } };
-                }
+                await axios.post(`${API_URL}/auth/register`, payload);
 
                 setMessage({
                     text: "Successfully registered!",
@@ -191,7 +194,6 @@ const Auth: React.FC = () => {
                 });
 
                 setIsLogin(true);
-
                 sendLog("The user has registered an account.", "info");
             }
 
@@ -309,22 +311,27 @@ const Auth: React.FC = () => {
     return (
         <PageWrapper>
             <Form onSubmit={handleSubmit} style={{ width: "300px" }}>
-                <Form.Group className='mb-3'>
+                <Form.Group>
                     <Form.Control
+                        name="username"
                         placeholder='Username'
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
+                        autoComplete={isLogin ? "username" : "new-username"}
                     />
                 </Form.Group>
                 <Form.Group >
                     <Form.Control
+                        name="password"
                         type='text'
                         placeholder='Password'
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         disabled={isGeneratingPassword}
+                        autoComplete={isLogin ? "current-password" : "new-password"}
+                        style={{ marginTop: "8px" }}
                     />
                     {!isLogin && <PasswordStrengthMeter password={password} />}
                 </Form.Group>
@@ -341,6 +348,7 @@ const Auth: React.FC = () => {
                             }}
                         >
                             <Form.Control
+                                name="confirm-password"
                                 type='password'
                                 placeholder='Confirm password'
                                 value={confirmPassword}
@@ -362,11 +370,10 @@ const Auth: React.FC = () => {
                         </Form.Group>
                         <p style={{
                             color: "rgb(100, 105, 111)",
-                            fontSize: "70%",
+                            fontSize: "9px",
                             position: "relative",
-                            top: "-3px",
                             whiteSpace: "nowrap",
-                            marginTop: "8px"
+                            marginTop: "4px"
                         }}>
                             No loot worth stealing here anyway...
                         </p>
@@ -406,7 +413,14 @@ const Auth: React.FC = () => {
                     </Alert>
                 )}
 
-                <p style={{ color: "grey", textAlign: "center", marginTop: "12px", fontSize: "90%" }}>
+                <p
+                    style={{
+                        color: "grey",
+                        textAlign: "center",
+                        marginTop: "1rem",
+                        fontSize: "12px"
+                    }}
+                >
                     {isLogin ? "No account? Rip and... " : (
                         <>
                             The only thing they fear...<br /> is you
@@ -416,7 +430,7 @@ const Auth: React.FC = () => {
                         style={{
                             color: "rgb(25, 135, 84)",
                             cursor: "pointer",
-                            fontSize: "115%"
+                            fontSize: "14px"
                         }}
                         onClick={() => {
                             setIsLogin(!isLogin);
