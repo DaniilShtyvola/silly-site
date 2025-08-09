@@ -1,8 +1,11 @@
 import { FC, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+
 import "./PageHeader.css";
 
 import { Navbar, Nav } from "react-bootstrap";
+
+import axios from "axios";
 
 import { FontAwesomeIcon, FontAwesomeIconProps } from "@fortawesome/react-fontawesome";
 import {
@@ -11,24 +14,37 @@ import {
     faCode,
     faTurnUp,
     faLocationDot,
-    faRightToBracket,
-    faUser
+    faRightToBracket
 } from "@fortawesome/free-solid-svg-icons";
-
-import useAuthAvatar from '../../hooks/UseAuthAvatar';
 
 import RandomText from "../RandomText/RandomText";
 import EaseOutWrapper from "../EaseOutWrapper/EaseOutWrapper";
+import GradientAvatar from "../GradientAvatar/GradientAvatar";
+import GradientUsername from "../GradientUsername/GradientUsername";
+
+import useAuthAvatar from '../../hooks/UseAuth';
+
+import { UserStyle, UserStyleDto } from "../../models/UserStyle";
+
+import { parseStyle } from "../../utils/ParseStyle";
+import { AvatarIcons } from "../../utils/AvatarIcons";
 
 interface CustomNavLinkProps {
     icon?: FontAwesomeIconProps['icon'];
-    text: string;
+    text: React.ReactNode;
     tooltip: string;
     link: string;
     onHover: (text: string, link: string) => void;
+    gradientColors?: [string, string];
 }
 
-const CustomNavLink: React.FC<CustomNavLinkProps> = ({ icon, text, tooltip, link, onHover }) => {
+const CustomNavLink: React.FC<CustomNavLinkProps> = ({
+    icon,
+    text,
+    tooltip,
+    link,
+    onHover
+}) => {
     const location = useLocation();
 
     return (
@@ -43,7 +59,8 @@ const CustomNavLink: React.FC<CustomNavLinkProps> = ({ icon, text, tooltip, link
                 onMouseEnter={() => onHover(tooltip, link)}
                 onMouseLeave={() => onHover('', '')}
             >
-                {icon && <FontAwesomeIcon icon={icon} />} {text}
+                {icon && <FontAwesomeIcon icon={icon} />}{" "}
+                {text}
             </Nav.Link>
         </Nav>
     );
@@ -54,13 +71,20 @@ interface PageHeaderProps { }
 const PageHeader: FC<PageHeaderProps> = () => {
     const location = useLocation();
 
-    const { avatar, isAuthenticated, username, isAdmin } = useAuthAvatar();
+    const { isAuthenticated, username, isAdmin } = useAuthAvatar();
 
     const [hoverState, setHoverState] = useState<{ text: string; link: string }>({
-        text: 'Hover over a link to get more info...',
-        link: ''
+        text: "Hover over a link to get more info...",
+        link: "",
     });
     const [hoverTimer, setHoverTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+    const [style, setStyle] = useState<UserStyle>({
+        avatarColors: ["#898F96", "#898F96"],
+        userNameColors: ["#898F96", "#898F96"],
+        avatarDirection: "to right",
+        avatarIcon: AvatarIcons["user"],
+    });
 
     const handleHover = (text: string, link: string) => {
         if (hoverTimer) {
@@ -68,10 +92,10 @@ const PageHeader: FC<PageHeaderProps> = () => {
         }
 
         const timer = setTimeout(() => {
-            if (text !== '') {
+            if (text !== "") {
                 setHoverState({ text, link });
             } else {
-                setHoverState({ text: 'Hover over a link to get more info...', link: '' });
+                setHoverState({ text: "Hover over a link to get more info...", link: "" });
             }
         }, 200);
 
@@ -85,6 +109,32 @@ const PageHeader: FC<PageHeaderProps> = () => {
             }
         };
     }, [hoverTimer]);
+
+    useEffect(() => {
+        const handleLoggedIn = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) return;
+
+                const response = await axios.get<UserStyleDto>(`${import.meta.env.VITE_API_URL}/me/style`, {
+                    headers: {
+                        token,
+                    },
+                });
+
+                const parsed = parseStyle(response.data);
+                setStyle(parsed);
+            } catch (error) {
+                console.error("Failed to fetch user style on loggedIn event:", error);
+            }
+        };
+
+        window.addEventListener("loggedIn", handleLoggedIn);
+
+        return () => {
+            window.removeEventListener("loggedIn", handleLoggedIn);
+        };
+    }, []);
 
     return (
         <>
@@ -102,7 +152,7 @@ const PageHeader: FC<PageHeaderProps> = () => {
                         flexDirection: "row"
                     }}
                 >
-                    <CustomNavLink link={"/board"} icon={faNewspaper} text={"Board"} tooltip={"Meet the silliest cats in the world!"} onHover={handleHover} />
+                    <CustomNavLink link={"/news"} icon={faNewspaper} text={"News"} tooltip={"Boy, this is so educational!"} onHover={handleHover} />
                     <CustomNavLink link={"/creator"} icon={faCode} text={"Creator"} tooltip={"Find out who made that mess."} onHover={handleHover} />
                     {isAdmin && (
                         <CustomNavLink link={"/admin"} icon={faScrewdriverWrench} text={"Admin"} tooltip={"Manage and oversee everything here."} onHover={handleHover} />
@@ -121,7 +171,12 @@ const PageHeader: FC<PageHeaderProps> = () => {
                             display: "flex"
                         }}
                         >
-                            <CustomNavLink link={"/profile"} text={username} tooltip={"Your profile needs more SSStylish."} onHover={handleHover} />
+                            <CustomNavLink
+                                link={"/profile"}
+                                text={<GradientUsername text={username} colors={style.userNameColors} />}
+                                tooltip={"Your profile needs more SSStyle."}
+                                onHover={handleHover}
+                            />
                             <div
                                 style={{
                                     position: "relative",
@@ -129,34 +184,22 @@ const PageHeader: FC<PageHeaderProps> = () => {
                                     marginLeft: "6px"
                                 }}
                             >
-                                <Link to="/profile">
-                                    <div
-                                        style={{
-                                            width: 44,
-                                            height: 44,
-                                            borderRadius: "50%",
-                                            position: "absolute",
-                                            left: "-18px",
-                                            top: "-9px",
-                                            border: "rgb(43, 48, 52) solid 1px",
-                                            cursor: "pointer",
-                                            backgroundColor: "rgb(23, 25, 27)",
-                                            display: "flex",
-                                            justifyContent: "center",
-                                            alignItems: "center"
-                                        }}
-                                        onMouseEnter={() => handleHover("Your profile needs more SSStyle!", "/profile")}
-                                        onMouseLeave={() => handleHover('', '')}
-                                    >
-                                        <FontAwesomeIcon
-                                            icon={avatar ? avatar.icon : faUser}
-                                            style={{
-                                                color: avatar ? `#${avatar.color}` : "rgb(137, 143, 150)",
-                                                position: "relative",
-                                                fontSize: "22px"
-                                            }}
-                                        />
-                                    </div>
+                                <Link
+                                    to="/profile"
+                                    style={{
+                                        position: "absolute",
+                                        left: "-18px",
+                                        top: "-6px"
+                                    }}
+                                    onMouseEnter={() => handleHover("Your profile needs more SSStyle.", "/profile")}
+                                    onMouseLeave={() => handleHover('', '')}
+                                >
+                                    <GradientAvatar
+                                        icon={style.avatarIcon}
+                                        colors={style.avatarColors}
+                                        direction={style.avatarDirection}
+                                        size={40}
+                                    />
                                 </Link>
                             </div>
                         </div>
@@ -167,7 +210,7 @@ const PageHeader: FC<PageHeaderProps> = () => {
             </Navbar>
             <div style={{
                 width: "100%",
-                fontSize: "85%",
+                fontSize: "0.8rem",
                 padding: "8px 12px",
                 display: "flex",
                 justifyContent: "space-between"
@@ -200,7 +243,7 @@ const PageHeader: FC<PageHeaderProps> = () => {
                             marginLeft: "4px",
                             position: "relative",
                             top: location.pathname === hoverState.link ? "4px" : "2.5px",
-                            fontSize: "75%"
+                            fontSize: "0.6rem"
                         }}
                     />
                 </EaseOutWrapper>

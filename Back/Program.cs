@@ -93,7 +93,9 @@ using (var scope = app.Services.CreateScope())
             IsAdmin = true,
             CreatedAt = DateTime.UtcNow,
             AvatarIcon = "star",
-            AvatarColor = "FFC107"
+            AvatarColor = "6666EE,C279E5",
+            AvatarDirection = "to bottom left",
+            UserNameColor = "6666EE,C279E5"
         };
 
         context.Users.Add(admin);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, CSSProperties } from 'react';
+
 import './EaseOutWrapper.css';
 
 interface EaseOutWrapperProps {

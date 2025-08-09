@@ -34,8 +34,8 @@ public class UserController : ControllerBase
         return User.Claims.FirstOrDefault(c => c.Type == "userName")?.Value;
     }
 
-    [HttpGet("avatar")]
-    public IActionResult GetAvatar([FromHeader] string token)
+    [HttpGet("style")]
+    public IActionResult GetUserStyle([FromHeader] string token)
     {
         var userName = GetUserNameFromToken(token);
         if (string.IsNullOrEmpty(userName))
@@ -45,17 +45,19 @@ public class UserController : ControllerBase
         if (user == null)
             return NotFound("User not found.");
 
-        var response = new AvatarResponse
+        var response = new UserStyleDto
         {
-            AvatarIcon = user.AvatarIcon,
-            AvatarColor = user.AvatarColor
+            AvatarIcon = user.AvatarIcon ?? string.Empty,
+            AvatarColor = user.AvatarColor ?? string.Empty,
+            AvatarDirection = user.AvatarDirection ?? "to right",
+            UserNameColor = user.UserNameColor ?? string.Empty
         };
 
         return Ok(response);
     }
 
-    [HttpPost("avatar")]
-    public IActionResult SetAvatar([FromHeader] string token, [FromBody] SetAvatarRequest request)
+    [HttpPost("style")]
+    public IActionResult SetUserStyle([FromHeader] string token, [FromBody] SetUserStyleRequest request)
     {
         var userName = GetUserNameFromToken(token);
         if (string.IsNullOrEmpty(userName))
@@ -67,6 +69,8 @@ public class UserController : ControllerBase
 
         user.AvatarIcon = request.AvatarIcon;
         user.AvatarColor = request.AvatarColor;
+        user.AvatarDirection = request.AvatarDirection;
+        user.UserNameColor = request.UserNameColor;
 
         _context.Users.Update(user);
         _context.SaveChanges();
@@ -86,8 +90,7 @@ public class UserController : ControllerBase
         if (user == null)
             return NotFound("User not found.");
 
-        var commentsCount = await _context.Comments
-            .CountAsync(c => c.UserId == user.Id);
+        var commentsCount = await _context.Comments.CountAsync(c => c.UserId == user.Id);
 
         var lastComments = await _context.Comments
             .Where(c => c.UserId == user.Id)
@@ -132,13 +135,19 @@ public class UserController : ControllerBase
 
         var response = new UserInfoResponse
         {
+            UserName = user.UserName,
             RegisteredAt = user.CreatedAt,
             CommentsCount = commentsCount,
             LastComments = lastCommentDtos,
             ReceivedReactionsCountByType = receivedReactions,
             UserReactionsCountByType = givenReactions,
-            AvatarIcon = user.AvatarIcon ?? "faUser",
-            AvatarColor = user.AvatarColor ?? "#898F96"
+            Style = new UserStyleDto
+            {
+                AvatarIcon = user.AvatarIcon ?? "faUser",
+                AvatarColor = user.AvatarColor ?? "#898F96",
+                AvatarDirection = user.AvatarDirection ?? "to right",
+                UserNameColor = user.UserNameColor ?? ""
+            }
         };
 
         return Ok(response);

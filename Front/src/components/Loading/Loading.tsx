@@ -1,10 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
+
 import './Loading.css';
 
 import { ProgressBar, Spinner } from "react-bootstrap";
 
 import { FontAwesomeIcon, FontAwesomeIconProps } from "@fortawesome/react-fontawesome";
-import { faCheck, faSatellite, faGlobe, faMagnifyingGlass, faServer, faHourglassStart, faPercent } from "@fortawesome/free-solid-svg-icons";
+import { 
+    faCheck, 
+    faSatellite, 
+    faGlobe, 
+    faMagnifyingGlass, 
+    faServer, 
+    faHourglassStart, 
+    faPercent 
+} from "@fortawesome/free-solid-svg-icons";
 
 import LoadingDots from "../LoadingDots/LoadingsDots";
 import RandomText from "../RandomText/RandomText";
@@ -72,7 +81,7 @@ const Stage: React.FC<StageProps> = ({ icon, text, show, status, size, hide }) =
             style={{
                 display: "flex",
                 overflow: "hidden",
-                fontSize: size === "big" ? "14px" : "10px",
+                fontSize: size === "big" ? "1rem" : "0.7rem",
                 fontWeight: 500,
                 color: size === "big" ? "rgb(137, 143, 150)" : "rgb(100, 105, 111)",
                 alignItems: "center",
@@ -159,7 +168,7 @@ const Loading: React.FC<LoadingProps> = ({
                 }}>
                     <p style={{
                         color: "rgb(197, 202, 209)",
-                        fontSize: "120%",
+                        fontSize: "1.2rem",
                         margin: "4px 4px",
                         fontWeight: "600",
                         textAlign: "center"
@@ -181,7 +190,7 @@ const Loading: React.FC<LoadingProps> = ({
                                     icon={faPercent}
                                     style={{
                                         marginLeft: '2px',
-                                        fontSize: "14px",
+                                        fontSize: "1rem",
                                         paddingTop: "1px"
                                     }}
                                 />

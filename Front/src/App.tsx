@@ -6,9 +6,9 @@ import PageHeader from "./components/PageHeader/PageHeader";
 import PageWrapper from "./components/PageWrapper/PageWrapper";
 import EaseOutWrapper from "./components/EaseOutWrapper/EaseOutWrapper";
 
-import Board from "./pages/Home/Board";
+import Board from "./pages/Board/Board";
 import Auth from "./pages/Auth/Auth";
-//import Profile from "./pages/Profile/Profile";
+import Profile from "./pages/Profile/Profile";
 
 import { sendLog } from "./utils/SendLog";
 
@@ -50,9 +50,9 @@ function App() {
                     </EaseOutWrapper>
                     <Routes>
                         <Route path="/" element={<></>} />
-                        <Route path="/board" element={<Board />} />
+                        <Route path="/news" element={<Board />} />
                         <Route path="/login" element={<Auth />} />
-                        {/* <Route path="/profile" element={<Profile/ >} /> */}
+                        <Route path="/profile" element={<Profile />} />
                     </Routes>
                 </Router>
             )}

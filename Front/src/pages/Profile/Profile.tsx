@@ -1,121 +1,90 @@
-// import React, { useEffect, useState } from "react";
-// import axios from "axios";
-// //import { format } from "date-fns";
+import React, { useEffect, useState } from "react";
 
-// interface CommentMinimizedResponse {
-//   id: number;
-//   text: string;
-//   createdAt: string;
-//   catNormalizedName: string;
-// }
+import axios from "axios";
 
-// interface UserInfoResponse {
-//   registeredAt: string;
-//   catReactionsCount: number;
-//   receivedReactionsOnCommentsCount: number;
-//   latestComments: CommentMinimizedResponse[];
-// }
+import GradientAvatar from "../../components/GradientAvatar/GradientAvatar";
+import GradientUsername from "../../components/GradientUsername/GradientUsername";
 
-// const Profile: React.FC = () => {
-//   const [info, setInfo] = useState<UserInfoResponse | null>(null);
-//   const [avatar, setAvatar] = useState<string | null>(null);
-//   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+import { UserStyle, UserInfoDto } from "../../models/UserStyle";
 
-//   const API_URL = import.meta.env.VITE_API_URL;
+import { AvatarIcons } from "../../utils/AvatarIcons";
+import { formatTime } from "../../utils/FormatTime";
+import { parseStyle } from "../../utils/ParseStyle";
 
-//   useEffect(() => {
-//     const fetchInfo = async () => {
-//       try {
-//         const token = localStorage.getItem("token");
-//         const response = await axios.get<UserInfoResponse>(`${API_URL}/auth/info`, {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         });
-//         setInfo(response.data);
-//       } catch (error) {
-//         console.error("Failed to fetch user info:", error);
-//       }
-//     };
+const Profile: React.FC = () => {
+    const [info, setInfo] = useState<UserInfoDto | null>(null);
 
-//     fetchInfo();
-//   }, []);
+    const [style, setStyle] = useState<UserStyle>({
+        avatarColors: ["#898F96", "#898F96"],
+        userNameColors: ["#898F96", "#898F96"],
+        avatarDirection: "to right",
+        avatarIcon: AvatarIcons["user"],
+    });
 
-//   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     if (e.target.files?.[0]) {
-//       setAvatarFile(e.target.files[0]);
-//       setAvatar(URL.createObjectURL(e.target.files[0]));
-//     }
-//   };
+    const API_URL = import.meta.env.VITE_API_URL;
 
-//   const handleAvatarUpload = async () => {
-//     if (!avatarFile) return;
+    useEffect(() => {
+        const fetchInfo = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                const response = await axios.get<UserInfoDto>(`${API_URL}/me/info`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
 
-//     const formData = new FormData();
-//     formData.append("avatar", avatarFile);
+                setInfo(response.data);
 
-//     try {
-//       const token = localStorage.getItem("token");
-//       await axios.post(`${API_URL}/user/upload-avatar`, formData, {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           "Content-Type": "multipart/form-data",
-//         },
-//       });
-//       alert("Avatar uploaded successfully!");
-//     } catch (error) {
-//       console.error("Avatar upload failed:", error);
-//       alert("Failed to upload avatar.");
-//     }
-//   };
+                setStyle(parseStyle(response.data.style));
+            } catch (error) {
+                console.error("Failed to fetch user info:", error);
+            }
+        };
 
-//   if (!info) return <p>Loading...</p>;
+        fetchInfo();
+    }, []);
 
-//   return (
-//     <div style={{ maxWidth: "600px", margin: "0 auto" }}>
-//       <h2>My Profile</h2>
+    return (
+        <div>
+            {info && (
+                <div style={{
+                    backgroundColor: "rgb(33, 37, 41)",
+                    color: "white",
+                    padding: "12px 20px",
+                    display: "flex",
+                    alignItems: "center"
+                }}>
+                    <GradientAvatar
+                        icon={style.avatarIcon}
+                        colors={style.avatarColors}
+                        direction={style.avatarDirection}
+                        size={40}
+                        backgroundColor="rgb(33, 37, 41)"
+                    />
+                    <div style={{
+                        marginLeft: "12px"
+                    }}>
+                        <div style={{
+                            fontSize: "1.1rem",
+                            display: "flex",
+                            alignItems: "center"
+                        }}>
+                            <GradientUsername
+                                text={info?.userName}
+                                colors={style.userNameColors}
+                            />
+                            <p style={{
+                                fontSize: "0.8rem",
+                                color: "rgb(137, 143, 150)",
+                                marginLeft: "8px"
+                            }}>
+                                {formatTime(new Date())}
+                            </p>
+                        </div>
+                        <p>Kept you waiting, huh?</p>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
-//       <div style={{ marginBottom: "20px" }}>
-//         <strong>Registered:</strong>{" "}
-//         {format(new Date(info.registeredAt), "yyyy-MM-dd")}
-//       </div>
-//       <div>
-//         <strong>Cat reactions given:</strong> {info.catReactionsCount}
-//       </div>
-//       <div>
-//         <strong>Reactions received on comments:</strong> {info.receivedReactionsOnCommentsCount}
-//       </div>
-
-//       <h3 style={{ marginTop: "20px" }}>Latest Comments</h3>
-//       <ul>
-//         {info.latestComments.map((comment) => (
-//           <li key={comment.id} style={{ marginBottom: "10px" }}>
-//             <div><strong>Cat:</strong> {comment.catNormalizedName}</div>
-//             <div><strong>Text:</strong> {comment.text}</div>
-//             <div style={{ fontSize: "80%", color: "#666" }}>
-//               {format(new Date(comment.createdAt), "yyyy-MM-dd HH:mm")}
-//             </div>
-//           </li>
-//         ))}
-//       </ul>
-
-//       <h3>Change Avatar</h3>
-//       <input type="file" accept="image/*" onChange={handleAvatarChange} />
-//       {avatar && (
-//         <div style={{ marginTop: "10px" }}>
-//           <img
-//             src={avatar}
-//             alt="Preview"
-//             style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "50%" }}
-//           />
-//           <br />
-//           <button onClick={handleAvatarUpload} style={{ marginTop: "10px" }}>
-//             Upload Avatar
-//           </button>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Profile;
+export default Profile;

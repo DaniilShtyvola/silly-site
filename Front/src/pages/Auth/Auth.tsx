@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Form, Button, Alert, ProgressBar } from "react-bootstrap";
+
+import axios from "axios";
+import zxcvbn from "zxcvbn";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faFaceSadTear,
     faFaceLaugh,
-    faDice
+    faDice,
+    faArrowsLeftRightToLine,
+    faArrowsLeftRight
 } from "@fortawesome/free-solid-svg-icons";
 
-import axios from "axios";
-import zxcvbn from "zxcvbn";
-
 import RandomText from "../../components/RandomText/RandomText";
-import PageWrapper from "../../components/PageWrapper/PageWrapper";
 
 import { sendLog } from "../../utils/SendLog";
 
@@ -85,7 +87,7 @@ const PasswordStrengthMeter: React.FC<{ password: string }> = ({ password }) => 
             </ProgressBar>
             <p style={{
                 color: "rgb(137, 143, 150)",
-                fontSize: "9px",
+                fontSize: "0.7rem",
                 textAlign: "right",
                 position: "relative",
                 top: "-3px",
@@ -99,12 +101,21 @@ const PasswordStrengthMeter: React.FC<{ password: string }> = ({ password }) => 
 };
 
 const Auth: React.FC = () => {
+    const navigate = useNavigate();
+
     const [isLogin, setIsLogin] = useState(true);
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [username, setUsername] = useState("");
 
     const [isGeneratingPassword, setIsGeneratingPassword] = useState(false);
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (token) {
+            navigate("/profile");
+        }
+    }, [navigate]);
 
     const [message, setMessage] = useState<{
         text: string;
@@ -131,7 +142,16 @@ const Auth: React.FC = () => {
                 setMessage({
                     text: "Username must be at least 6 characters long.",
                     variant: "danger",
-                    icon: faFaceSadTear,
+                    icon: faArrowsLeftRight,
+                });
+                return;
+            }
+
+            if (trimmedUsername.length > 25) {
+                setMessage({
+                    text: "Username cannot be longer than 25 characters.",
+                    variant: "danger",
+                    icon: faArrowsLeftRightToLine,
                 });
                 return;
             }
@@ -150,6 +170,24 @@ const Auth: React.FC = () => {
                     text: "Username cannot contain spaces.",
                     variant: "danger",
                     icon: faFaceSadTear,
+                });
+                return;
+            }
+
+            if (trimmedPassword.length < 5) {
+                setMessage({
+                    text: "Password must be at least 5 characters long.",
+                    variant: "danger",
+                    icon: faArrowsLeftRight,
+                });
+                return;
+            }
+
+            if (trimmedPassword.length > 30) {
+                setMessage({
+                    text: "Password cannot be longer than 30 characters.",
+                    variant: "danger",
+                    icon: faArrowsLeftRightToLine,
                 });
                 return;
             }
@@ -183,6 +221,9 @@ const Auth: React.FC = () => {
                 });
 
                 window.dispatchEvent(new Event("loggedIn"));
+
+                navigate("/profile");
+
                 sendLog("The user has logged in.", "info");
             } else {
                 await axios.post(`${API_URL}/auth/register`, payload);
@@ -309,7 +350,7 @@ const Auth: React.FC = () => {
     };
 
     return (
-        <PageWrapper>
+        <div>
             <Form onSubmit={handleSubmit} style={{ width: "300px" }}>
                 <Form.Group>
                     <Form.Control
@@ -370,7 +411,7 @@ const Auth: React.FC = () => {
                         </Form.Group>
                         <p style={{
                             color: "rgb(100, 105, 111)",
-                            fontSize: "9px",
+                            fontSize: "0.7rem",
                             position: "relative",
                             whiteSpace: "nowrap",
                             marginTop: "4px"
@@ -418,7 +459,7 @@ const Auth: React.FC = () => {
                         color: "grey",
                         textAlign: "center",
                         marginTop: "1rem",
-                        fontSize: "12px"
+                        fontSize: "0.8rem"
                     }}
                 >
                     {isLogin ? "No account? Rip and... " : (
@@ -430,7 +471,7 @@ const Auth: React.FC = () => {
                         style={{
                             color: "rgb(25, 135, 84)",
                             cursor: "pointer",
-                            fontSize: "14px"
+                            fontSize: "1rem"
                         }}
                         onClick={() => {
                             setIsLogin(!isLogin);
@@ -444,7 +485,7 @@ const Auth: React.FC = () => {
                     </span>
                 </p>
             </Form>
-        </PageWrapper>
+        </div>
     );
 };
 

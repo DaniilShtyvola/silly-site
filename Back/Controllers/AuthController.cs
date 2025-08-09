@@ -63,8 +63,17 @@ namespace Controllers
             if (request.UserName.Length < 6)
                 return BadRequest("Username must be at least 6 characters long.");
 
+            if (request.UserName.Length > 25)
+                return BadRequest("Username cannot be longer than 25 characters.");
+
             if (request.Password != request.Password.Trim())
                 return BadRequest("Password cannot start or end with spaces.");
+
+            if (request.Password.Length < 5)
+                return BadRequest("Password must be at least 5 characters long.");
+
+            if (request.Password.Length > 30)
+                return BadRequest("Password cannot be longer than 30 characters.");
 
             var passwordHash = HashPassword(request.Password);
 
@@ -76,7 +85,7 @@ namespace Controllers
                 CreatedAt = DateTime.UtcNow,
                 LastLogin = null,
                 AvatarIcon = "faUser",
-                AvatarColor = "#898F96"
+                AvatarColor = "898F96"
             };
 
             await _context.Users.AddAsync(user);
