@@ -1,0 +1,20 @@
+.slider-picker>div>div {
+    margin-top: 0 !important;
+}
+
+.hue-horizontal {
+    top: -14px;
+    border-radius: 2px;
+}
+
+.hue-horizontal>div>div {
+    background-color: rgb(68, 71, 75) !important;
+    cursor: pointer;
+}
+
+.focused-color-input {
+    background-color: rgb(33, 37, 41) !important;
+    color: white !important;
+    outline: none !important;
+    box-shadow: rgb(25, 135, 84) 0px 0px 0px 1px !important;
+}

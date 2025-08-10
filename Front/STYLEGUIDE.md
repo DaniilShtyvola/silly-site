@@ -26,6 +26,7 @@ I use the following color palette:
 
 - Dark background: `rgb(23, 25, 27)`
 - Regular background: `rgb(33, 37, 41)`
+- Light background: `rgb(68, 71, 75)`
 - Primary text: `white`
 - Secondary text: `rgb(186, 191, 196)`
 - Tertiary text: `rgb(137, 143, 150)`

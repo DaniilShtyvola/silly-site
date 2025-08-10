@@ -1,0 +1,27 @@
+.gradient-username {
+    display: inline-block;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+}
+
+.gradient-text {
+    background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+
+.solid-text {
+    color: var(--gradient-start);
+}
+
+@supports not (background-clip: text) {
+    .gradient-text {
+        background: none;
+        color: var(--gradient-start);
+        -webkit-text-fill-color: initial;
+    }
+}

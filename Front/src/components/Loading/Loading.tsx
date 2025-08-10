@@ -167,7 +167,7 @@ const Loading: React.FC<LoadingProps> = ({
                     justifyContent: "flex-start",
                 }}>
                     <p style={{
-                        color: "rgb(197, 202, 209)",
+                        color: "white",
                         fontSize: "1.2rem",
                         margin: "4px 4px",
                         fontWeight: "600",

@@ -111,19 +111,31 @@ const PageHeader: FC<PageHeaderProps> = () => {
     }, [hoverTimer]);
 
     useEffect(() => {
+        const savedStyle = localStorage.getItem("userStyle");
+        if (savedStyle) {
+            try {
+                const parsed = JSON.parse(savedStyle) as UserStyle;
+                setStyle(parsed);
+            } catch {
+                console.warn("Failed to parse saved style from localStorage");
+            }
+        }
+    }, []);
+
+    useEffect(() => {
         const handleLoggedIn = async () => {
             try {
                 const token = localStorage.getItem("token");
                 if (!token) return;
 
                 const response = await axios.get<UserStyleDto>(`${import.meta.env.VITE_API_URL}/me/style`, {
-                    headers: {
-                        token,
-                    },
+                    headers: { token },
                 });
 
                 const parsed = parseStyle(response.data);
                 setStyle(parsed);
+
+                localStorage.setItem("userStyle", JSON.stringify(parsed));
             } catch (error) {
                 console.error("Failed to fetch user style on loggedIn event:", error);
             }
