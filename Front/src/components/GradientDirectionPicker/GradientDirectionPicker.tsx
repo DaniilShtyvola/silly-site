@@ -22,14 +22,42 @@ const GradientDirectionPicker = ({ style, setStyle }: {
         }
     };
 
-    const [angle, setAngle] = React.useState(extractAngle(style.avatarDirection));
+    const [angle, setAngle] = React.useState(() => extractAngle(style.avatarDirection));
+    const timeoutRef = React.useRef<number | undefined>(undefined);
 
     React.useEffect(() => {
-        setStyle(prev => ({
-            ...prev,
-            avatarDirection: `${angle}deg`,
-        }));
-    }, [angle, setStyle]);
+        const currentAngle = extractAngle(style.avatarDirection);
+        if (currentAngle !== angle) {
+            setAngle(currentAngle);
+        }
+    }, [style.avatarDirection]);
+
+    React.useEffect(() => {
+        const newDirection = `${angle}deg`;
+
+        if (style.avatarDirection !== newDirection) {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+
+            timeoutRef.current = setTimeout(() => {
+                setStyle(prev => ({
+                    ...prev,
+                    avatarDirection: newDirection,
+                }));
+            }, 20);
+        }
+
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, [angle]);
+
+    const handleAngleChange = (newAngle: number) => {
+        setAngle(newAngle);
+    };
 
     return (
         <div className="custom-slider-container">
@@ -38,7 +66,7 @@ const GradientDirectionPicker = ({ style, setStyle }: {
                 min={0}
                 max={360}
                 value={angle}
-                onChange={e => setAngle(Number(e.target.value))}
+                onChange={e => handleAngleChange(Number(e.target.value))}
                 className="custom-slider"
             />
         </div>

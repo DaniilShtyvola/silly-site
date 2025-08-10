@@ -12,6 +12,10 @@
     cursor: pointer;
 }
 
+.form-control {
+    box-shadow: rgb(68, 71, 75) 0px 0px 0px 1px !important;
+}
+
 .focused-color-input {
     background-color: rgb(33, 37, 41) !important;
     color: white !important;
