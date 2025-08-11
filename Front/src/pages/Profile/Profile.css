@@ -10,10 +10,11 @@
 .hue-horizontal>div>div {
     background-color: rgb(68, 71, 75) !important;
     cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
-.form-control {
-    box-shadow: rgb(68, 71, 75) 0px 0px 0px 1px !important;
+.hue-horizontal>div>div:hover {
+    background-color: rgb(90, 94, 98) !important;
 }
 
 .focused-color-input {

@@ -24,6 +24,7 @@
     box-shadow: rgba(0, 0, 0, 0.37) 0px 1px 4px 0px;
     cursor: pointer;
     border: none;
+    transition: background-color 0.2s ease;
 }
 
 .custom-slider::-moz-range-thumb {
@@ -35,6 +36,7 @@
     box-shadow: rgba(0, 0, 0, 0.37) 0px 1px 4px 0px;
     cursor: pointer;
     border: none;
+    transition: background-color 0.2s ease;
 }
 
 .custom-slider::-webkit-slider-track {
@@ -51,4 +53,12 @@
     background: rgb(100, 105, 111);
     border: none;
     outline: none;
+}
+
+.custom-slider::-webkit-slider-thumb:hover {
+    background-color: rgb(90, 94, 98) !important;
+}
+
+.custom-slider::-moz-range-thumb:hover {
+    background-color: rgb(90, 94, 98) !important;
 }

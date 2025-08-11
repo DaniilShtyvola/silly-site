@@ -24,34 +24,50 @@ import {
     faBoltLightning,
     faLocationCrosshairs,
     faMeteor,
-    faSplotch
+    faSplotch,
+    faEye,
+    faMusic,
+    faGamepad,
+    faGauge,
+    faBatteryFull
 } from "@fortawesome/free-solid-svg-icons";
 
 export const AvatarIcons = {
     user: faUser,
     star: faStar,
+
     cat: faCat,
-    dog: faDog,
     crow: faCrow,
+    horseHead: faHorseHead,
     dragon: faDragon,
+
     ghost: faGhost,
     wizardHat: faHatWizard,
-    gear: faGear,
-    mountainSun: faMountainSun,
-    dumbbell: faDumbbell,
-    hatCowboy: faHatCowboy,
-    horseHead: faHorseHead,
-    jetFighter: faJetFighter,
     skull: faSkull,
+    hatCowboy: faHatCowboy,
+
     pizzaSlice: faPizzaSlice,
-    fire: faFire,
     lemon: faLemon,
-    feather: faFeather,
     leaf: faLeaf,
+    feather: faFeather,
+
+    fire: faFire,
     seedling: faSeedling,
-    microchip: faMicrochip,
-    boltLightning: faBoltLightning,
-    locationCrosshairs: faLocationCrosshairs,
+    mountainSun: faMountainSun,
     meteor: faMeteor,
-    splotch: faSplotch
+
+    gear: faGear,
+    dumbbell: faDumbbell,
+    microchip: faMicrochip,
+    jetFighter: faJetFighter,
+
+    locationCrosshairs: faLocationCrosshairs,
+    splotch: faSplotch,
+    eye: faEye,
+    music: faMusic,
+
+    gamepad: faGamepad,
+    gauge: faGauge,
+    batteryFull: faBatteryFull,
+    boltLightning: faBoltLightning,
 };

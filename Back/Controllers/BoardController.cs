@@ -189,8 +189,13 @@ public class BoardController : ControllerBase
                     {
                         Id = c.User.Id,
                         UserName = c.User.UserName,
-                        AvatarIcon = c.User.AvatarIcon ?? "faUser",
-                        AvatarColor = c.User.AvatarColor ?? "rgb(137, 143, 150)"
+                        Style = new UserStyleDto
+                        {
+                            AvatarIcon = c.User.AvatarIcon ?? "user",
+                            AvatarColor = c.User.AvatarColor ?? "#898F96",
+                            AvatarDirection = c.User.AvatarDirection ?? "to right",
+                            UserNameColor = c.User.UserNameColor ?? "#898F96"
+                        }
                     },
                     Reactions = reactionsByCommentId[c.Id]
                         .Select(r => new ReactionDto

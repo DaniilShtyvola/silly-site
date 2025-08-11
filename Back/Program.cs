@@ -7,13 +7,11 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Kestrel server
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     serverOptions.ListenAnyIP(44395);
 });
 
-// Add CORS policy
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -46,16 +44,13 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Configure DbContext with SQLite connection string
 builder.Services.AddDbContext<MainDbContext>(options =>
 {
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-// Add configuration for JwtSettings
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));  // Load JwtSettings from appsettings.json
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
-// Add services for controllers and Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -73,10 +68,8 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map controllers
 app.MapControllers();
 
-// Migrate the database on startup
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

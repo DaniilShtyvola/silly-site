@@ -1,6 +1,8 @@
 import React from "react";
-import { UserStyle } from "../../models/UserStyle";
+
 import "./GradientDirectionPicker.css";
+
+import { UserStyle } from "../../models/UserStyle";
 
 const GradientDirectionPicker = ({ style, setStyle }: {
     style: UserStyle,

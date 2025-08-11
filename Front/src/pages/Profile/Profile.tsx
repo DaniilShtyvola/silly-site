@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 
 import "./Profile.css"
 
+import { Button } from "react-bootstrap";
+
 import { SliderPicker } from "react-color";
 import axios from "axios";
 
@@ -9,9 +11,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faCaretRight,
     faXmark,
-    faEye,
     faSliders,
-    faCopy
+    faFloppyDisk
 } from "@fortawesome/free-solid-svg-icons";
 
 import GradientAvatar from "../../components/GradientAvatar/GradientAvatar";
@@ -144,287 +145,317 @@ const Profile: React.FC = () => {
     return (
         <div>
             {info && (
-                <>
+                <div>
                     <div style={{
-                        backgroundColor: "rgb(33, 37, 41)",
-                        padding: "1rem 20px",
+                        display: "flex",
+                        gap: "1rem"
                     }}>
-                        <p style={{
-                            color: "white",
-                            marginBottom: "1rem",
-                            fontSize: "1.1rem",
-                        }}>
-                            Preview
-                        </p>
-
-                        <div style={{
-                            color: "white",
-                            display: "flex",
-                            alignItems: "center",
-                        }}>
-                            <GradientAvatar
-                                icon={style.avatarIcon}
-                                colors={style.avatarColors}
-                                direction={style.avatarDirection}
-                                size={40}
-                                backgroundColor="rgb(33, 37, 41)"
-                            />
+                        <div>
                             <div style={{
-                                marginLeft: "1rem"
+                                backgroundColor: "rgb(33, 37, 41)",
+                                padding: "1rem 20px",
                             }}>
-                                <div style={{
+                                <p style={{
+                                    color: "white",
+                                    marginBottom: "1rem",
                                     fontSize: "1.1rem",
+                                }}>
+                                    Preview
+                                </p>
+
+                                <div style={{
+                                    color: "white",
                                     display: "flex",
+                                    alignItems: "center",
+                                }}>
+                                    <GradientAvatar
+                                        icon={style.avatarIcon}
+                                        colors={style.avatarColors}
+                                        direction={style.avatarDirection}
+                                        size={40}
+                                        backgroundColor="rgb(33, 37, 41)"
+                                    />
+                                    <div style={{
+                                        marginLeft: "1rem"
+                                    }}>
+                                        <div style={{
+                                            fontSize: "1.1rem",
+                                            display: "flex",
+                                            alignItems: "center"
+                                        }}>
+                                            <GradientUsername
+                                                text={info?.userName}
+                                                colors={style.userNameColors}
+                                            />
+                                            <p style={{
+                                                fontSize: "0.8rem",
+                                                color: "rgb(137, 143, 150)",
+                                                marginLeft: "8px"
+                                            }}>
+                                                {formatTime(new Date())}
+                                            </p>
+                                        </div>
+                                        <p>Kept you waiting, huh?</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                style={{
+                                    backgroundColor: "rgb(33, 37, 41)",
+                                    padding: "1rem 20px",
+                                    position: "relative",
+                                    marginTop: "1rem",
+                                }}
+                            >
+                                <div style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    color: "white",
+                                    marginBottom: "1rem",
+                                    fontSize: "1.1rem",
                                     alignItems: "center"
                                 }}>
-                                    <GradientUsername
-                                        text={info?.userName}
-                                        colors={style.userNameColors}
-                                    />
-                                    <p style={{
-                                        fontSize: "0.8rem",
-                                        color: "rgb(137, 143, 150)",
-                                        marginLeft: "8px"
-                                    }}>
-                                        {formatTime(new Date())}
-                                    </p>
+                                    <p>Customizer</p>
+                                    <FontAwesomeIcon icon={faSliders} />
                                 </div>
-                                <p>Kept you waiting, huh?</p>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div
-                        style={{
-                            backgroundColor: "rgb(33, 37, 41)",
-                            padding: "1rem 20px",
-                            position: "relative",
-                            marginTop: "1rem",
-                        }}
-                    >
-
-                        <div style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            color: "white",
-                            marginBottom: "1rem",
-                            fontSize: "1.1rem",
-                            alignItems: "center"
-                        }}>
-                            <p>Customizer</p>
-                            <FontAwesomeIcon icon={faSliders} />
-                        </div>
-                        <div style={{
-                            display: "flex",
-                            color: `rgb(100, 105, 111)`,
-                            justifyContent: "space-between",
-                        }}>
-                            {/* Avatar */}
-                            <div>
                                 <div style={{
                                     display: "flex",
-                                    alignItems: 'center',
-                                    justifyContent: "space-between"
+                                    color: `rgb(100, 105, 111)`,
+                                    justifyContent: "space-between",
+                                }}>
+                                    {/* Avatar */}
+                                    <div>
+                                        <div style={{
+                                            display: "flex",
+                                            alignItems: 'center',
+                                            justifyContent: "space-between"
+                                        }}>
+                                            <p style={{
+                                                color: 'rgb(137, 143, 150)'
+                                            }}>
+                                                Avatar
+                                            </p>
+                                        </div>
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}>
+                                            <input
+                                                type="color"
+                                                value={style.avatarColors[0]}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setEditingColorKey('avatarColor0');
+                                                }}
+                                                onChange={(e) => {
+                                                    handleColorChange({ hex: e.target.value });
+                                                }}
+                                                className={`form-control form-control-color ${editingColorKey === 'avatarColor0' ? 'focused-color-input' : ''}`}
+                                                style={{
+                                                    padding: '4px',
+                                                    width: '36px',
+                                                    height: '28px',
+                                                    borderRadius: "6px"
+                                                }}
+                                            />
+
+                                            <FontAwesomeIcon
+                                                icon={avatarSingleColor ? faXmark : faCaretRight}
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    width: '10px',
+                                                    transition: 'color 0.2s ease',
+                                                    padding: "6px 8px"
+                                                }}
+                                                onMouseEnter={(e) => (e.currentTarget.style.color = 'rgb(137, 143, 150)')}
+                                                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgb(100, 105, 111)')}
+                                                onClick={() => {
+                                                    setAvatarSingleColor((prev) => {
+                                                        const newVal = !prev;
+                                                        if (newVal) {
+                                                            setStyle((prevStyle) => ({
+                                                                ...prevStyle,
+                                                                avatarColors: [prevStyle.avatarColors[0], prevStyle.avatarColors[0]],
+                                                            }));
+                                                        }
+                                                        return newVal;
+                                                    });
+                                                }}
+                                            />
+
+                                            <input
+                                                type="color"
+                                                value={style.avatarColors[1]}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    if (avatarSingleColor) return;
+                                                    setEditingColorKey('avatarColor1');
+                                                }}
+                                                onChange={(e) => {
+                                                    if (!avatarSingleColor) {
+                                                        handleColorChange({ hex: e.target.value });
+                                                    }
+                                                }}
+                                                disabled={avatarSingleColor}
+                                                className={`form-control form-control-color ${editingColorKey === 'avatarColor1' ? 'focused-color-input' : ''}`}
+                                                style={{
+                                                    padding: '4px',
+                                                    width: '36px',
+                                                    height: '28px',
+                                                    borderRadius: '6px',
+                                                    opacity: avatarSingleColor ? 0.4 : 1,
+                                                    cursor: avatarSingleColor ? 'not-allowed' : 'pointer',
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Nickname */}
+                                    <div>
+                                        <p style={{
+                                            color: 'rgb(137, 143, 150)'
+                                        }}>
+                                            Nickname
+                                        </p>
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}>
+                                            <input
+                                                type="color"
+                                                value={style.userNameColors[0]}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setEditingColorKey('userNameColor0');
+                                                }}
+                                                onChange={(e) => {
+                                                    handleColorChange({ hex: e.target.value });
+                                                }}
+                                                className={`form-control form-control-color ${editingColorKey === 'userNameColor0' ? 'focused-color-input' : ''}`}
+                                                style={{
+                                                    padding: '4px',
+                                                    width: '36px',
+                                                    height: '28px',
+                                                    borderRadius: "6px"
+                                                }}
+                                            />
+
+                                            <FontAwesomeIcon
+                                                icon={userNameSingleColor ? faXmark : faCaretRight}
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    width: '10px',
+                                                    transition: 'color 0.2s ease',
+                                                    padding: "6px 8px"
+                                                }}
+                                                onMouseEnter={(e) => (e.currentTarget.style.color = 'rgb(137, 143, 150)')}
+                                                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgb(100, 105, 111)')}
+                                                onClick={() => {
+                                                    setUserNameSingleColor((prev) => {
+                                                        const newVal = !prev;
+                                                        if (newVal) {
+                                                            setStyle((prevStyle) => ({
+                                                                ...prevStyle,
+                                                                userNameColors: [prevStyle.userNameColors[0], prevStyle.userNameColors[0]],
+                                                            }));
+                                                        }
+                                                        return newVal;
+                                                    });
+                                                }}
+                                            />
+
+                                            <input
+                                                type="color"
+                                                value={userNameSingleColor ? style.userNameColors[0] : style.userNameColors[1]}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    if (userNameSingleColor) return;
+                                                    setEditingColorKey('userNameColor1');
+                                                }}
+                                                onChange={(e) => {
+                                                    if (!userNameSingleColor) {
+                                                        handleColorChange({ hex: e.target.value });
+                                                    }
+                                                }}
+                                                disabled={userNameSingleColor}
+                                                className={`form-control form-control-color ${editingColorKey === 'userNameColor1' ? 'focused-color-input' : ''}`}
+                                                style={{
+                                                    padding: '4px',
+                                                    width: '36px',
+                                                    height: '28px',
+                                                    borderRadius: '6px',
+                                                    opacity: userNameSingleColor ? 0.4 : 1,
+                                                    cursor: userNameSingleColor ? 'not-allowed' : 'pointer',
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {editingColorKey && (
+                                    <div
+                                        style={{
+                                            marginTop: "26px",
+                                            marginBottom: "6px"
+                                        }}
+                                    >
+                                        <SliderPicker
+                                            color={color}
+                                            onChange={handleColorChange}
+                                        />
+                                    </div>
+                                )}
+
+                                <div style={{
+                                    marginTop: "1.1rem"
                                 }}>
                                     <p style={{
                                         color: 'rgb(137, 143, 150)'
                                     }}>
-                                        Avatar
+                                        Gradient direction
                                     </p>
-                                </div>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px'
-                                }}>
-                                    <input
-                                        type="color"
-                                        value={style.avatarColors[0]}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            setEditingColorKey('avatarColor0');
-                                        }}
-                                        onChange={(e) => {
-                                            handleColorChange({ hex: e.target.value });
-                                        }}
-                                        className={`form-control form-control-color ${editingColorKey === 'avatarColor0' ? 'focused-color-input' : ''}`}
-                                        style={{
-                                            padding: '4px',
-                                            width: '36px',
-                                            height: '28px',
-                                            borderRadius: "6px"
-                                        }}
-                                    />
-
-                                    <FontAwesomeIcon
-                                        icon={avatarSingleColor ? faXmark : faCaretRight}
-                                        style={{ cursor: 'pointer', width: '10px' }}
-                                        onClick={() => {
-                                            setAvatarSingleColor((prev) => {
-                                                const newVal = !prev;
-                                                if (newVal) {
-                                                    setStyle((prevStyle) => ({
-                                                        ...prevStyle,
-                                                        avatarColors: [prevStyle.avatarColors[0], prevStyle.avatarColors[0]],
-                                                    }));
-                                                }
-                                                return newVal;
-                                            });
-                                        }}
-                                    />
-
-                                    <input
-                                        type="color"
-                                        value={style.avatarColors[1]}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            if (avatarSingleColor) return;
-                                            setEditingColorKey('avatarColor1');
-                                        }}
-                                        onChange={(e) => {
-                                            if (!avatarSingleColor) {
-                                                handleColorChange({ hex: e.target.value });
-                                            }
-                                        }}
-                                        disabled={avatarSingleColor}
-                                        className={`form-control form-control-color ${editingColorKey === 'avatarColor1' ? 'focused-color-input' : ''}`}
-                                        style={{
-                                            padding: '4px',
-                                            width: '36px',
-                                            height: '28px',
-                                            borderRadius: '6px',
-                                            opacity: avatarSingleColor ? 0.4 : 1,
-                                            cursor: avatarSingleColor ? 'not-allowed' : 'pointer',
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Nickname */}
-                            <div>
-                                <p style={{
-                                    color: 'rgb(137, 143, 150)'
-                                }}>
-                                    Nickname
-                                </p>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px'
-                                }}>
-                                    <input
-                                        type="color"
-                                        value={style.userNameColors[0]}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            setEditingColorKey('userNameColor0');
-                                        }}
-                                        onChange={(e) => {
-                                            handleColorChange({ hex: e.target.value });
-                                        }}
-                                        className={`form-control form-control-color ${editingColorKey === 'userNameColor0' ? 'focused-color-input' : ''}`}
-                                        style={{
-                                            padding: '4px',
-                                            width: '36px',
-                                            height: '28px',
-                                            borderRadius: "6px"
-                                        }}
-                                    />
-
-                                    <FontAwesomeIcon
-                                        icon={userNameSingleColor ? faXmark : faCaretRight}
-                                        style={{ cursor: 'pointer', width: '10px' }}
-                                        onClick={() => {
-                                            setUserNameSingleColor((prev) => {
-                                                const newVal = !prev;
-                                                if (newVal) {
-                                                    setStyle((prevStyle) => ({
-                                                        ...prevStyle,
-                                                        userNameColors: [prevStyle.userNameColors[0], prevStyle.userNameColors[0]],
-                                                    }));
-                                                }
-                                                return newVal;
-                                            });
-                                        }}
-                                    />
-
-                                    <input
-                                        type="color"
-                                        value={userNameSingleColor ? style.userNameColors[0] : style.userNameColors[1]}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            if (userNameSingleColor) return;
-                                            setEditingColorKey('userNameColor1');
-                                        }}
-                                        onChange={(e) => {
-                                            if (!userNameSingleColor) {
-                                                handleColorChange({ hex: e.target.value });
-                                            }
-                                        }}
-                                        disabled={userNameSingleColor}
-                                        className={`form-control form-control-color ${editingColorKey === 'userNameColor1' ? 'focused-color-input' : ''}`}
-                                        style={{
-                                            padding: '4px',
-                                            width: '36px',
-                                            height: '28px',
-                                            borderRadius: '6px',
-                                            opacity: userNameSingleColor ? 0.4 : 1,
-                                            cursor: userNameSingleColor ? 'not-allowed' : 'pointer',
-                                        }}
+                                    <GradientDirectionPicker
+                                        style={style}
+                                        setStyle={setStyle}
                                     />
                                 </div>
                             </div>
                         </div>
 
-                        {editingColorKey && (
-                            <div
-                                style={{
-                                    marginTop: "26px",
-                                    marginBottom: "6px"
-                                }}
-                            >
-                                <SliderPicker
-                                    color={color}
-                                    onChange={handleColorChange}
-                                />
-                            </div>
-                        )}
-
                         <div style={{
-                            marginTop: "1.1rem"
+                            backgroundColor: "rgb(33, 37, 41)",
+                            padding: "1rem 20px",
+                            position: "relative",
+                            display: "inline-block"
                         }}>
                             <p style={{
-                                color: 'rgb(137, 143, 150)'
+                                color: "white",
+                                marginBottom: "1rem",
+                                fontSize: "1.1rem",
                             }}>
-                                Gradient direction
+                                Avatar
                             </p>
-                            <GradientDirectionPicker
-                                style={style}
-                                setStyle={setStyle}
+
+                            <AvatarIconPicker
+                                selectedIcon={style.avatarIcon}
+                                onSelect={(icon) => setStyle(prev => ({ ...prev, avatarIcon: icon }))}
                             />
                         </div>
                     </div>
 
-                    <div style={{
-                        backgroundColor: "rgb(33, 37, 41)",
-                        padding: "1rem 20px",
-                        position: "relative",
-                        marginTop: "1rem",
-                    }}>
-                        <p style={{
-                            color: "white",
-                            marginBottom: "1rem",
-                            fontSize: "1.1rem",
-                        }}>
-                            Avatar
-                        </p>
-
-                        <AvatarIconPicker
-                            selectedIcon={style.avatarIcon}
-                            onSelect={(icon) => setStyle(prev => ({ ...prev, avatarIcon: icon }))}
-                        />
-                    </div>
-                </>
+                    <Button
+                        style={{
+                            marginTop: "1rem",
+                            paddingInline: "2rem"
+                        }}
+                        variant='dark'
+                        type='submit'
+                    >
+                        <FontAwesomeIcon icon={faFloppyDisk} /> Save
+                    </Button>
+                </div>
             )}
         </div>
     );

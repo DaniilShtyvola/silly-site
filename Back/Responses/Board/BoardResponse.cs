@@ -9,7 +9,6 @@ public class PostWithCommentsDto
     public string Title { get; set; }
     public string Content { get; set; }
     public DateTime CreatedAt { get; set; }
-
     public List<ReactionDto> Reactions { get; set; }
     public List<CommentDto> Comments { get; set; }
 }
@@ -20,7 +19,6 @@ public class CommentDto
     public string? Text { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? Edited { get; set; }
-
     public UserDto User { get; set; }
     public List<ReactionDto> Reactions { get; set; }
 }
@@ -29,8 +27,7 @@ public class UserDto
 {
     public Guid Id { get; set; }
     public string UserName { get; set; }
-    public string AvatarIcon { get; set; }
-    public string AvatarColor { get; set; }
+    public UserStyleDto Style { get; set; }
 }
 
 public class ReactionDto

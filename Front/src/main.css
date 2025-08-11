@@ -37,3 +37,7 @@ html, body, #root {
     cursor: default;
     user-select: none;
 }
+
+.btn-dark:hover {
+    background-color: rgb(68, 71, 75);
+}
