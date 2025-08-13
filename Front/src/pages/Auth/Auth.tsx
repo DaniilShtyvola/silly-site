@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Form, Button, Alert, ProgressBar } from "react-bootstrap";
+import { Form, Button, ProgressBar } from "react-bootstrap";
 
 import axios from "axios";
 import zxcvbn from "zxcvbn";
 
+import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faFaceSadTear,
@@ -18,6 +19,7 @@ import {
 import RandomText from "../../components/RandomText/RandomText";
 
 import { sendLog } from "../../utils/SendLog";
+import ToastMessage from "../../components/ToastMessage/ToastMessage";
 
 const PasswordStrengthMeter: React.FC<{ password: string }> = ({ password }) => {
     const testResult = zxcvbn(password);
@@ -120,9 +122,8 @@ const Auth: React.FC = () => {
     const [message, setMessage] = useState<{
         text: string;
         variant: string;
-        icon?: any;
+        icon: IconDefinition;
     } | null>(null);
-    const [isFadingOut, setIsFadingOut] = useState(false);
 
     const isLoginRef = useRef(isLogin);
     useEffect(() => {
@@ -266,20 +267,6 @@ const Auth: React.FC = () => {
             });
         }
     };
-
-    useEffect(() => {
-        if (message) {
-            const fadeOutTimer = setTimeout(() => setIsFadingOut(true), 3000);
-            const removeMessageTimer = setTimeout(() => {
-                setMessage(null);
-                setIsFadingOut(false);
-            }, 4000);
-            return () => {
-                clearTimeout(fadeOutTimer);
-                clearTimeout(removeMessageTimer);
-            };
-        }
-    }, [message]);
 
     const generateStrongPassword = async (
         setPassword: (value: string) => void,
@@ -433,26 +420,10 @@ const Auth: React.FC = () => {
                     {isLogin ? "Log in" : "Register"}
                 </Button>
 
-                {message && (
-                    <Alert
-                        style={{
-                            opacity: isFadingOut ? 0 : 1,
-                            maxHeight: isFadingOut ? 0 : "100px",
-                            padding: isFadingOut ? "0" : "8px",
-                            marginTop: isFadingOut ? "0" : "16px",
-                            marginBottom: 0,
-                            overflow: "hidden",
-                            textAlign: "center",
-                            transition: "opacity 1s, max-height 1s ease, padding 1s ease, margin 1.5s ease",
-                            backgroundColor: message.variant === "success" ? "rgb(40, 167, 69)" : "rgb(220, 53, 69)",
-                            color: "white",
-                            border: "1px solid rgb(33, 37, 41)",
-                        }}
-                    >
-                        {message.icon && <FontAwesomeIcon icon={message.icon} style={{ marginRight: 6 }} />}
-                        {message.text}
-                    </Alert>
-                )}
+                <ToastMessage
+                    message={message}
+                    onClose={() => setMessage(null)}
+                />
 
                 <p
                     style={{

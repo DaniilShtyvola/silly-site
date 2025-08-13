@@ -75,7 +75,7 @@ public class UserController : ControllerBase
         _context.Users.Update(user);
         _context.SaveChanges();
 
-        return Ok(new { Message = "Avatar updated successfully." });
+        return Ok(new { Message = "Changes saved." });
     }
 
     [HttpGet("info")]
@@ -92,61 +92,17 @@ public class UserController : ControllerBase
 
         var commentsCount = await _context.Comments.CountAsync(c => c.UserId == user.Id);
 
-        var lastComments = await _context.Comments
-            .Where(c => c.UserId == user.Id)
-            .OrderByDescending(c => c.CreatedAt)
-            .Take(3)
-            .ToListAsync();
-
-        var lastCommentIds = lastComments.Select(c => c.Id).ToList();
-
-        var reactionsToLastComments = await _context.Reactions
-            .Where(r => r.CommentId != null && lastCommentIds.Contains(r.CommentId.Value))
-            .GroupBy(r => new { r.CommentId, r.Type })
-            .Select(g => new { g.Key.CommentId, g.Key.Type, Count = g.Count() })
-            .ToListAsync();
-
-        var lastCommentDtos = lastComments.Select(comment => new UserCommentDto
-        {
-            Id = comment.Id,
-            Text = comment.Text,
-            CreatedAt = comment.CreatedAt,
-            Reactions = reactionsToLastComments
-                .Where(r => r.CommentId == comment.Id)
-                .ToDictionary(r => r.Type, r => r.Count)
-        }).ToList();
-
-        var userCommentIds = await _context.Comments
-            .Where(c => c.UserId == user.Id)
-            .Select(c => c.Id)
-            .ToListAsync();
-
-        var receivedReactions = await _context.Reactions
-            .Where(r => r.CommentId != null && userCommentIds.Contains(r.CommentId.Value))
-            .GroupBy(r => r.Type)
-            .Select(g => new { g.Key, Count = g.Count() })
-            .ToDictionaryAsync(g => g.Key, g => g.Count);
-
-        var givenReactions = await _context.Reactions
-            .Where(r => r.UserId == user.Id)
-            .GroupBy(r => r.Type)
-            .Select(g => new { g.Key, Count = g.Count() })
-            .ToDictionaryAsync(g => g.Key, g => g.Count);
-
         var response = new UserInfoResponse
         {
             UserName = user.UserName,
             RegisteredAt = user.CreatedAt,
             CommentsCount = commentsCount,
-            LastComments = lastCommentDtos,
-            ReceivedReactionsCountByType = receivedReactions,
-            UserReactionsCountByType = givenReactions,
             Style = new UserStyleDto
             {
                 AvatarIcon = user.AvatarIcon ?? "faUser",
-                AvatarColor = user.AvatarColor ?? "#898F96",
+                AvatarColor = user.AvatarColor ?? "898F96",
                 AvatarDirection = user.AvatarDirection ?? "to right",
-                UserNameColor = user.UserNameColor ?? ""
+                UserNameColor = user.UserNameColor ?? "898F96"
             }
         };
 

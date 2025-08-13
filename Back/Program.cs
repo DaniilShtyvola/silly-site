@@ -87,7 +87,7 @@ using (var scope = app.Services.CreateScope())
             CreatedAt = DateTime.UtcNow,
             AvatarIcon = "star",
             AvatarColor = "6666EE,C279E5",
-            AvatarDirection = "to bottom left",
+            AvatarDirection = "225deg",
             UserNameColor = "6666EE,C279E5"
         };
 

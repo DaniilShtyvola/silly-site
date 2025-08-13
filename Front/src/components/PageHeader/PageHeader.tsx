@@ -148,6 +148,48 @@ const PageHeader: FC<PageHeaderProps> = () => {
         };
     }, []);
 
+    useEffect(() => {
+        const handleLoggedOut = () => {
+            setStyle({
+                avatarColors: ["#898F96", "#898F96"],
+                userNameColors: ["#898F96", "#898F96"],
+                avatarDirection: "to right",
+                avatarIcon: AvatarIcons["user"],
+            });
+
+            setHoverState({
+                text: "Hover over a link to get more info...",
+                link: "",
+            });
+        };
+
+        window.addEventListener("loggedOut", handleLoggedOut);
+
+        return () => {
+            window.removeEventListener("loggedOut", handleLoggedOut);
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleUserStyleChanged = () => {
+            const savedStyle = localStorage.getItem("userStyle");
+            if (savedStyle) {
+                try {
+                    const parsed = JSON.parse(savedStyle) as UserStyle;
+                    setStyle(parsed);
+                } catch {
+                    console.warn("Failed to parse userStyle from localStorage");
+                }
+            }
+        };
+
+        window.addEventListener("userStyleChanged", handleUserStyleChanged);
+
+        return () => {
+            window.removeEventListener("userStyleChanged", handleUserStyleChanged);
+        };
+    }, []);
+
     return (
         <>
             <Navbar

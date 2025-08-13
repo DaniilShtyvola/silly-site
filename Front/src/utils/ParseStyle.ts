@@ -15,12 +15,25 @@ export const parseStyle = (style: UserStyleDto): UserStyle => {
     const avatarDirection = style.avatarDirection || "to right";
 
     const iconKey = style.avatarIcon?.toLowerCase() || "user";
-    const avatarIcon = AvatarIcons[iconKey] || AvatarIcons["user"];
+    const avatarIcon = iconKey in AvatarIcons ? AvatarIcons[iconKey as keyof typeof AvatarIcons] : AvatarIcons["user"];
 
     return {
         avatarColors,
         userNameColors,
         avatarDirection,
         avatarIcon,
+    };
+};
+
+export const serializeStyle = (style: UserStyle): UserStyleDto => {
+    const stripHash = (color: string) => color.replace(/^#/, "");
+
+    return {
+        avatarIcon: Object.keys(AvatarIcons).find(
+            key => AvatarIcons[key as keyof typeof AvatarIcons] === style.avatarIcon
+        ) || "user",
+        avatarColor: style.avatarColors.map(stripHash).join(", "),
+        avatarDirection: style.avatarDirection,
+        userNameColor: style.userNameColors.map(stripHash).join(", "),
     };
 };

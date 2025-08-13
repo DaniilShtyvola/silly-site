@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import "./Profile.css"
 
@@ -7,28 +8,40 @@ import { Button } from "react-bootstrap";
 import { SliderPicker } from "react-color";
 import axios from "axios";
 
+import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faCaretRight,
     faXmark,
     faSliders,
-    faFloppyDisk
+    faFloppyDisk,
+    faRightFromBracket,
+    faRotateLeft,
+    faFaceLaugh,
+    faFaceSadTear,
 } from "@fortawesome/free-solid-svg-icons";
 
 import GradientAvatar from "../../components/GradientAvatar/GradientAvatar";
 import GradientUsername from "../../components/GradientUsername/GradientUsername";
+import ToastMessage from "../../components/ToastMessage/ToastMessage";
+
+import GradientDirectionPicker from "../../components/GradientDirectionPicker/GradientDirectionPicker";
+import AvatarIconPicker from "../../components/AvatarIconPicker/AvatarIconPicker";
 
 import { UserStyle, UserInfoDto } from "../../models/UserStyle";
 
 import { AvatarIcons } from "../../utils/AvatarIcons";
 import { formatTime } from "../../utils/FormatTime";
-import { parseStyle } from "../../utils/ParseStyle";
-import GradientDirectionPicker from "../../components/GradientDirectionPicker/GradientDirectionPicker";
-import AvatarIconPicker from "../../components/AvatarIconPicker/AvatarIconPicker";
+import {
+    parseStyle,
+    serializeStyle
+} from "../../utils/ParseStyle";
 
 type ColorKey = "avatarColor0" | "avatarColor1" | "userNameColor0" | "userNameColor1";
 
 const Profile: React.FC = () => {
+    const navigate = useNavigate();
+
     const [info, setInfo] = useState<UserInfoDto | null>(null);
 
     const [style, setStyle] = useState<UserStyle>({
@@ -37,27 +50,61 @@ const Profile: React.FC = () => {
         avatarDirection: "to right",
         avatarIcon: AvatarIcons["user"],
     });
+    const [oldStyle, setOldStyle] = useState<UserStyle | null>(null);
+    const [isStyleChanged, setIsStyleChanged] = useState(false);
+
+    const [isLoading, setIsLoading] = useState(true);
+
+    const [message, setMessage] = useState<{
+        text: string;
+        variant: string;
+        icon: IconDefinition;
+    } | null>(null);
 
     const API_URL = import.meta.env.VITE_API_URL;
 
     useEffect(() => {
         const fetchInfo = async () => {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                navigate("/login");
+                return;
+            }
+
+            setIsLoading(true);
+
             try {
-                const token = localStorage.getItem("token");
                 const response = await axios.get<UserInfoDto>(`${API_URL}/me/info`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
                 setInfo(response.data);
 
-                setStyle(parseStyle(response.data.style));
+                const parsed = parseStyle(response.data.style);
+
+                setStyle(parsed);
+                setOldStyle(parsed);
             } catch (error) {
                 console.error("Failed to fetch user info:", error);
+            } finally {
+                setIsLoading(false);
             }
         };
 
         fetchInfo();
     }, []);
+
+    useEffect(() => {
+        if (!oldStyle) return;
+        setIsStyleChanged(JSON.stringify(style) !== JSON.stringify(oldStyle));
+    }, [style]);
+
+    const resetStyle = () => {
+        if (oldStyle) {
+            setStyle(oldStyle);
+        }
+    };
 
     const [editingColorKey, setEditingColorKey] = useState<ColorKey | null>("avatarColor0");
     const [color, setColor] = useState("#ffffff");
@@ -140,6 +187,63 @@ const Profile: React.FC = () => {
             setEditingColorKey("userNameColor0");
         }
     }, [avatarSingleColor, userNameSingleColor, editingColorKey]);
+
+    const logout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userStyle");
+
+        window.dispatchEvent(new Event("loggedOut"));
+
+        navigate("/login");
+    };
+
+    const handleSaveStyle = async () => {
+        if (!isStyleChanged || isLoading) return;
+
+        setIsLoading(true);
+
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                navigate("/login");
+                return;
+            }
+
+            const styleDto = serializeStyle(style);
+
+            const response = await axios.post(
+                `${API_URL}/me/style`,
+                styleDto,
+                {
+                    headers: { token },
+                }
+            );
+
+            setOldStyle(style);
+            setIsStyleChanged(false);
+
+            localStorage.setItem("userStyle", JSON.stringify(style));
+
+            window.dispatchEvent(new Event("userStyleChanged"));
+
+            setMessage({
+                text: response.data?.message,
+                variant: "success",
+                icon: faFaceLaugh,
+            });
+
+        } catch (error) {
+            console.error("Failed to save style:", error);
+
+            setMessage({
+                text: "Error occured.",
+                variant: "danger",
+                icon: faFaceSadTear,
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
 
     return (
@@ -445,16 +549,56 @@ const Profile: React.FC = () => {
                         </div>
                     </div>
 
-                    <Button
-                        style={{
-                            marginTop: "1rem",
-                            paddingInline: "2rem"
-                        }}
-                        variant='dark'
-                        type='submit'
-                    >
-                        <FontAwesomeIcon icon={faFloppyDisk} /> Save
-                    </Button>
+                    <div style={{
+                        display: "flex",
+                        justifyContent: 'space-between',
+                        marginTop: "1rem",
+                        alignItems: "flex-start"
+                    }}>
+                        <div style={{
+                            display: "flex",
+                            gap: "1rem",
+                            marginRight: "1rem",
+                        }}>
+                            <Button
+                                style={{ paddingInline: "2rem" }}
+                                variant='dark'
+                                type='submit'
+                                disabled={!isStyleChanged || isLoading}
+                                onClick={handleSaveStyle}
+                            >
+                                <FontAwesomeIcon icon={faFloppyDisk} /> Save
+                            </Button>
+                            <Button
+                                variant='dark'
+                                type='button'
+                                onClick={resetStyle}
+                                disabled={!isStyleChanged || isLoading}
+                            >
+                                <FontAwesomeIcon
+                                    icon={faRotateLeft}
+                                    style={{
+                                        position: "relative",
+                                        top: "2px"
+                                    }}
+                                />
+                            </Button>
+                        </div>
+
+                        <ToastMessage message={message} onClose={() => setMessage(null)} />
+
+                        <Button
+                            style={{
+                                paddingInline: "2rem",
+                                marginLeft: "1rem"
+                            }}
+                            variant='dark'
+                            type='button'
+                            onClick={logout}
+                        >
+                            <FontAwesomeIcon icon={faRightFromBracket} /> Log out
+                        </Button>
+                    </div>
                 </div>
             )}
         </div>

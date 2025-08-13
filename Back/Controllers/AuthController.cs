@@ -23,12 +23,6 @@ namespace Controllers
             _jwtSettings = jwtSettings.Value;
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
-        {
-            return await Register(request, false);
-        }
-
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
@@ -46,7 +40,8 @@ namespace Controllers
             return Ok(new { Token = token });
         }
 
-        private async Task<IActionResult> Register(RegisterRequest request, bool isAdmin)
+        [HttpPost("register")]
+        public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
         {
             if (await _context.Users.AnyAsync(u => u.UserName == request.UserName))
                 return BadRequest("This username is already taken.");
@@ -81,17 +76,19 @@ namespace Controllers
             {
                 UserName = request.UserName,
                 PasswordHash = passwordHash,
-                IsAdmin = isAdmin,
+                IsAdmin = false,
                 CreatedAt = DateTime.UtcNow,
                 LastLogin = null,
                 AvatarIcon = "faUser",
-                AvatarColor = "898F96"
+                AvatarColor = "898F96",
+                AvatarDirection = "225deg",
+                UserNameColor = "898F96",
             };
 
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
 
-            return Ok(new { Message = isAdmin ? "Admin registered successfully." : "User registered successfully." });
+            return Ok(new { Message = "User registered successfully." });
         }
         private string HashPassword(string password)
         {

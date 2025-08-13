@@ -10,7 +10,11 @@ const useAuth = () => {
             const tokenPayload = JSON.parse(atob(token.split('.')[1]));
 
             if (tokenPayload.userName) setUsername(tokenPayload.userName);
-            if (tokenPayload.isAdmin !== undefined) setIsAdmin(tokenPayload.isAdmin);
+            if (tokenPayload.isAdmin !== undefined) {
+                setIsAdmin(tokenPayload.isAdmin === 'true');
+            } else {
+                setIsAdmin(false);
+            }
             setIsAuthenticated(true);
         } catch (err) {
             console.error("Failed to parse token", err);
@@ -31,9 +35,18 @@ const useAuth = () => {
             if (newToken) await processLogin(newToken);
         };
 
+        const handleLoggedOut = () => {
+            setUsername(null);
+            setIsAdmin(null);
+            setIsAuthenticated(false);
+        };
+
         window.addEventListener("loggedIn", handleLoggedIn);
+        window.addEventListener("loggedOut", handleLoggedOut);
+
         return () => {
             window.removeEventListener("loggedIn", handleLoggedIn);
+            window.removeEventListener("loggedOut", handleLoggedOut);
         };
     }, [processLogin]);
 

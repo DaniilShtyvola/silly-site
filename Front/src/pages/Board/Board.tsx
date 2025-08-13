@@ -54,7 +54,6 @@ const Comment: React.FC<{ comment: Comment }> = ({ comment }) => {
    );
 };
 
-
 const Board: React.FC = () => {
    const [boardData, setBoardData] = useState<BoardResponse | null>(null);
    const [loading, setLoading] = useState(true);

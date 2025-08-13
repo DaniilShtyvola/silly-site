@@ -2,7 +2,6 @@ import {
     faUser,
     faStar,
     faCat,
-    faDog,
     faCrow,
     faDragon,
     faGhost,
