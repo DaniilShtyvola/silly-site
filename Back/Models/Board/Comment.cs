@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public class Comment
 {
@@ -11,10 +12,16 @@ public class Comment
 
     public DateTime? Edited { get; set; }
 
+    [Required]
     public Guid UserId { get; set; }
     public User User { get; set; }
 
     [Required]
     public Guid PostId { get; set; }
     public Post Post { get; set; }
+
+    public Guid? ParentCommentId { get; set; }
+    public Comment? ParentComment { get; set; }
+
+    public ICollection<Comment> Replies { get; set; } = new List<Comment>();
 }

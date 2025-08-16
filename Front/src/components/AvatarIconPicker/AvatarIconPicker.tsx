@@ -46,11 +46,11 @@ const AvatarIconPicker: React.FC<AvatarIconPickerProps> = ({ selectedIcon, onSel
                                 borderRadius: "6px",
                                 border:
                                     icon === selectedIcon
-                                        ? "2px solid #4caf50"
+                                        ? "2px solid rgb(40, 167, 69)"
                                         : "2px solid transparent",
                                 backgroundColor:
                                     icon === selectedIcon
-                                        ? "rgba(76, 175, 80, 0.2)"
+                                        ? "rgb(43, 66, 50)"
                                         : "transparent",
                                 display: "flex",
                                 justifyContent: "center",

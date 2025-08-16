@@ -1,33 +1,34 @@
-export type Reaction = {
-    id: string;
-    type: string;
-    userId: string;
-};
+import { UserStyleDto } from "./UserStyle";
 
-export type User = {
+export type UserDto = {
     id: string;
     userName: string;
-    avatarBase64: string;
+    style: UserStyleDto;
 };
 
-export type Comment = {
+export type CommentDto = {
     id: string;
+    userId: string;
     text: string | null;
     createdAt: string;
     edited: string | null;
-    user: User;
-    reactions: Reaction[];
+    reactionCounts: Record<string, number> | {};
+    myReactions: Record<string, string> | {};
+    replies: CommentDto[];
 };
 
-export type Post = {
+export type PostWithCommentsDto = {
     id: string;
     title: string;
     content: string;
     createdAt: string;
-    reactions: Reaction[];
-    comments: Comment[];
+    reactionCounts: Record<string, number> | {};
+    myReactions: Record<string, string> | {};
+    comments: CommentDto[];
 };
 
-export type BoardResponse = {
-    posts: Post[];
+export type BoardResponseDto = {
+    posts: PostWithCommentsDto[];
+    users: UserDto[];
+    totalPosts: number;
 };

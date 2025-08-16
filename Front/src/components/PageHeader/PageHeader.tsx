@@ -128,9 +128,12 @@ const PageHeader: FC<PageHeaderProps> = () => {
                 const token = localStorage.getItem("token");
                 if (!token) return;
 
-                const response = await axios.get<UserStyleDto>(`${import.meta.env.VITE_API_URL}/me/style`, {
-                    headers: { token },
-                });
+                const response = await axios.get<UserStyleDto>(
+                    `${import.meta.env.VITE_API_URL}/me/style`,
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
 
                 const parsed = parseStyle(response.data);
                 setStyle(parsed);

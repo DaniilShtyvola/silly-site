@@ -97,20 +97,24 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-string HashPassword(string password)
+
+static string HashPassword(string password)
 {
-    var salt = new byte[16];
+    byte[] salt = new byte[16];
     using (var rng = RandomNumberGenerator.Create())
     {
         rng.GetBytes(salt);
     }
 
-    var hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+    int iterations = 10000;
+
+    byte[] hash = KeyDerivation.Pbkdf2(
         password: password,
         salt: salt,
         prf: KeyDerivationPrf.HMACSHA256,
-        iterationCount: 10000,
-        numBytesRequested: 32));
+        iterationCount: iterations,
+        numBytesRequested: 32
+    );
 
-    return $"{Convert.ToBase64String(salt)}:{hashed}";
+    return $"{iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
 }

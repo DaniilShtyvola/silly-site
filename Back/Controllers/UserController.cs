@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 [ApiController]
+[Authorize]
 [Route("me")]
 public class UserController : ControllerBase
 {
@@ -15,29 +15,15 @@ public class UserController : ControllerBase
         _context = context;
     }
 
-    private string? GetUserNameFromToken(string token)
-    {
-        try
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
-            return jwtToken.Claims.FirstOrDefault(c => c.Type == "userName")?.Value;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
     private string? GetUserNameFromClaims()
     {
         return User.Claims.FirstOrDefault(c => c.Type == "userName")?.Value;
     }
 
     [HttpGet("style")]
-    public IActionResult GetUserStyle([FromHeader] string token)
+    public IActionResult GetUserStyle()
     {
-        var userName = GetUserNameFromToken(token);
+        var userName = GetUserNameFromClaims();
         if (string.IsNullOrEmpty(userName))
             return Unauthorized("Invalid token.");
 
@@ -49,7 +35,7 @@ public class UserController : ControllerBase
         {
             AvatarIcon = user.AvatarIcon ?? string.Empty,
             AvatarColor = user.AvatarColor ?? string.Empty,
-            AvatarDirection = user.AvatarDirection ?? "to right",
+            AvatarDirection = user.AvatarDirection ?? "225deg",
             UserNameColor = user.UserNameColor ?? string.Empty
         };
 
@@ -57,9 +43,9 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("style")]
-    public IActionResult SetUserStyle([FromHeader] string token, [FromBody] SetUserStyleRequest request)
+    public IActionResult SetUserStyle([FromBody] SetUserStyleRequest request)
     {
-        var userName = GetUserNameFromToken(token);
+        var userName = GetUserNameFromClaims();
         if (string.IsNullOrEmpty(userName))
             return Unauthorized("Invalid token.");
 
@@ -79,7 +65,6 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("info")]
-    [Authorize]
     public async Task<ActionResult<UserInfoResponse>> GetUserInfo()
     {
         var userName = GetUserNameFromClaims();
@@ -101,7 +86,7 @@ public class UserController : ControllerBase
             {
                 AvatarIcon = user.AvatarIcon ?? "faUser",
                 AvatarColor = user.AvatarColor ?? "898F96",
-                AvatarDirection = user.AvatarDirection ?? "to right",
+                AvatarDirection = user.AvatarDirection ?? "225deg",
                 UserNameColor = user.UserNameColor ?? "898F96"
             }
         };

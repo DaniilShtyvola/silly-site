@@ -1,7 +1,9 @@
-export function formatTime(date: Date): string {
+export function formatTime(dateInput: Date | string): string {
+    const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
     const now = new Date();
 
-    const formatHHMM = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const formatHHMM = (d: Date) =>
+        d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const isToday = (d: Date) =>
         d.getDate() === now.getDate() &&

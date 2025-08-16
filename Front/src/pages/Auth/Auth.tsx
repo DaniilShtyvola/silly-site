@@ -80,7 +80,6 @@ const PasswordStrengthMeter: React.FC<{ password: string }> = ({ password }) => 
             >
                 <div
                     className="progress-bar"
-                    role="progressbar"
                     style={{
                         width: `${progressPercent}%`,
                         backgroundColor: getColor(),

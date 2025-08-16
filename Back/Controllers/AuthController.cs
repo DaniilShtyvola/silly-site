@@ -92,42 +92,51 @@ namespace Controllers
         }
         private string HashPassword(string password)
         {
-            var salt = new byte[16];
+            byte[] salt = new byte[16];
             using (var rng = RandomNumberGenerator.Create())
             {
                 rng.GetBytes(salt);
             }
 
-            var hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+            int iterations = 10000;
+
+            byte[] hash = KeyDerivation.Pbkdf2(
                 password: password,
                 salt: salt,
                 prf: KeyDerivationPrf.HMACSHA256,
-                iterationCount: 10000,
-                numBytesRequested: 32));
+                iterationCount: iterations,
+                numBytesRequested: 32
+            );
 
-            return $"{Convert.ToBase64String(salt)}:{hashed}";
+            return $"{iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
         }
 
         private bool VerifyPassword(string enteredPassword, string storedPasswordHash)
         {
-            var parts = storedPasswordHash.Split(':');
-            var salt = Convert.FromBase64String(parts[0]);
-            var hash = parts[1];
+            var parts = storedPasswordHash.Split('.');
+            if (parts.Length != 3)
+                return false;
 
-            var enteredHash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+            int iterations = int.Parse(parts[0]);
+            byte[] salt = Convert.FromBase64String(parts[1]);
+            byte[] storedHash = Convert.FromBase64String(parts[2]);
+
+            byte[] enteredHash = KeyDerivation.Pbkdf2(
                 password: enteredPassword,
                 salt: salt,
                 prf: KeyDerivationPrf.HMACSHA256,
-                iterationCount: 10000,
-                numBytesRequested: 32));
+                iterationCount: iterations,
+                numBytesRequested: storedHash.Length
+            );
 
-            return hash == enteredHash;
+            return CryptographicOperations.FixedTimeEquals(storedHash, enteredHash);
         }
 
         private string GenerateJwtToken(User user)
         {
             var claims = new List<Claim>
             {
+                new Claim("userId", user.Id.ToString()),
                 new Claim("userName", user.UserName),
                 new Claim("isAdmin", user.IsAdmin.ToString().ToLower())
             };

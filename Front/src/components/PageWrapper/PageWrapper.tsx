@@ -8,7 +8,7 @@ const PageWrapper: React.FC<PageWrapperProps> = ({ children }) => {
       width: "100%",
       display: "flex",
       justifyContent: "center",
-      height: "100%",
+      minHeight: "100%",
       backgroundColor: "rgb(23, 25, 27)"
     }}>
       <div style={{

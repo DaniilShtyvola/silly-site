@@ -75,9 +75,12 @@ const Profile: React.FC = () => {
             setIsLoading(true);
 
             try {
-                const response = await axios.get<UserInfoDto>(`${API_URL}/me/info`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                const response = await axios.get<UserInfoDto>(
+                    `${API_URL}/me/info`,
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
 
                 setInfo(response.data);
 
@@ -215,7 +218,7 @@ const Profile: React.FC = () => {
                 `${API_URL}/me/style`,
                 styleDto,
                 {
-                    headers: { token },
+                    headers: { Authorization: `Bearer ${token}` },
                 }
             );
 
@@ -244,7 +247,6 @@ const Profile: React.FC = () => {
             setIsLoading(false);
         }
     };
-
 
     return (
         <div>
