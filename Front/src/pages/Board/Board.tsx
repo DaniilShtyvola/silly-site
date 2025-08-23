@@ -1,12 +1,23 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+
+import { Form } from "react-bootstrap";
 
 import axios from "axios";
+
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+   faComment,
+   faEraser,
+   faPenToSquare,
+   faExclamationTriangle,
+   faCircleXmark,
+   faCircleCheck,
+} from "@fortawesome/free-solid-svg-icons";
 
 import GradientUsername from "../../components/GradientUsername/GradientUsername.tsx";
 import GradientAvatar from "../../components/GradientAvatar/GradientAvatar.tsx";
 import ExpandToggle from "../../components/ExpandToggle/ExpandToggle.tsx";
 import ReplyBox from "../../components/ReplyBox/ReplyBox.tsx";
-import ActionsPanel from "../../components/ActionsPanel/ActionsPanel.tsx";
 
 import type { BoardResponseDto, CommentDto, UserDto, PostWithCommentsDto } from "../../models/BoardResponse.ts";
 
@@ -14,6 +25,12 @@ import { formatTime } from "../../utils/FormatTime.ts";
 import { parseStyle } from "../../utils/ParseStyle.ts";
 import { ReactionIcons } from "../../utils/ReactionIcons";
 import { updateReactionsInBoard } from "../../utils/UpdateCommentReactions.ts";
+import { AvatarIcons } from "../../utils/AvatarIcons.ts";
+import { UserStyle } from "../../models/UserStyle.ts";
+import ReactionToggleButton from "../../components/ReactionToggleButton/ReactionToggleButton.tsx";
+import EaseOutWrapper from "../../components/EaseOutWrapper/EaseOutWrapper.tsx";
+import ReactionPicker from "../../components/ReactionPicker/ReactionPicker.tsx";
+import ReactionList from "../../components/ReactionList/ReactionList.tsx";
 
 interface CommentProps {
    comment: CommentDto;
@@ -21,38 +38,61 @@ interface CommentProps {
    isLast: boolean;
    onAddReaction: (parentId: string, type: string, parentType: "post" | "comment") => void;
    onDeleteReaction: (parentId: string, reactionId: string, type: string, parentType: "post" | "comment") => void;
+   onDeleteComment: (commentId: string) => void;
    onAddReply: (parentId: string, text: string, parentType: "post" | "comment") => void;
+   onEditComment: (commentId: string, text: string) => void;
 }
 
-const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction, onDeleteReaction, onAddReply }) => {
+const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction, onDeleteReaction, onDeleteComment, onAddReply, onEditComment }) => {
    const [isExpanded, setIsExpanded] = useState(false);
    const [isReplying, setIsReplying] = useState(false);
+   const [isEditing, setIsEditing] = useState(false);
+   const [isHovered, setIsHovered] = useState(false);
    const [showNewReactionList, setShowNewReactionList] = useState(false);
 
+   const [editedText, setEditedText] = useState(comment.text || "");
+
+   useEffect(() => {
+      setEditedText(comment.text || "");
+   }, [comment.text]);
+
+   const [style, setStyle] = useState<UserStyle>({
+      avatarColors: ["#898F96", "#898F96"],
+      userNameColors: ["#898F96", "#898F96"],
+      avatarDirection: "to right",
+      avatarIcon: AvatarIcons["user"],
+   });
+
    const user = users.find(u => u.id === comment.userId);
-   const style = parseStyle(user!.style);
+
+   useEffect(() => {
+      if (!user && comment.isDeleted) {
+         setStyle({
+            avatarColors: ["#898F96", "#898F96"],
+            userNameColors: ["#898F96", "#898F96"],
+            avatarDirection: "to right",
+            avatarIcon: AvatarIcons["xMark"],
+         });
+      } else if (user) {
+         setStyle(parseStyle(user.style));
+      }
+   }, [comment, users]);
 
    const availableReactions = Object.keys(ReactionIcons).filter(
       (type) => !(type in comment.reactionCounts)
    );
 
-   const reactionWrapperRef = useRef<HTMLDivElement>(null);
+   const handleAddReaction = (type: string) => {
+      onAddReaction(comment.id, type, "comment");
+   };
 
-   useEffect(() => {
-      function handleClickOutside(event: MouseEvent) {
-         if (
-            reactionWrapperRef.current &&
-            !reactionWrapperRef.current.contains(event.target as Node)
-         ) {
-            setShowNewReactionList(false);
-         }
-      }
+   const handleDeleteReaction = (reactionId: string, type: string) => {
+      onDeleteReaction(comment.id, reactionId, type, "comment");
+   };
 
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-         document.removeEventListener("mousedown", handleClickOutside);
-      };
-   }, []);
+   const handleAddReply = (text: string) => {
+      onAddReply(comment.id, text, "comment");
+   };
 
    return (
       <div key={comment.id}>
@@ -80,6 +120,8 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                   }} />
                </div>
                <div
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
                   style={{
                      display: "flex",
                      alignItems: "flex-start",
@@ -88,7 +130,6 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                      marginTop: "1.4rem",
                   }}
                >
-
                   <div style={{
                      marginTop: "2px"
                   }}>
@@ -104,39 +145,163 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                      marginLeft: "1rem",
                   }}>
                      <div style={{
-                        fontSize: "1.1rem",
                         display: "flex",
-                        alignItems: "center"
+                        justifyContent: "space-between",
                      }}>
-                        <GradientUsername
-                           text={user?.userName || "Unknown"}
-                           colors={style.userNameColors}
-                        />
-                        <p style={{
-                           fontSize: "0.8rem",
-                           color: "rgb(137, 143, 150)",
-                           marginLeft: "8px"
+                        <div style={{
+                           display: "flex",
+                           alignItems: "flex-end",
                         }}>
-                           {formatTime(comment.createdAt)}
-                        </p>
-                     </div>
-                     <p>{comment.text}</p>
+                           <GradientUsername
+                              text={user?.userName ?? "Unknown"}
+                              colors={style.userNameColors}
+                           />
+                           <p style={{
+                              fontSize: "0.8rem",
+                              color: "rgb(137, 143, 150)",
+                              marginBottom: "1.5px",
+                              marginLeft: "8px",
+                           }}>
+                              {formatTime(comment.createdAt)}
+                           </p>
+                        </div>
 
-                     <ActionsPanel
-                        availableReactions={availableReactions}
-                        parentId={comment.id}
-                        parentType="comment"
-                        reactionWrapperRef={reactionWrapperRef}
-                        showNewReactionList={showNewReactionList}
-                        setShowNewReactionList={setShowNewReactionList}
-                        reactions={comment}
-                        onAddReaction={onAddReaction}
-                        onDeleteReaction={onDeleteReaction}
-                        isReplying={isReplying}
-                        setIsReplying={setIsReplying}
-                        style={{
-                           top: "4px"
-                        }}
+                        {(comment.isDeleted && comment.userId != null) && (
+                           <p
+                              style={{
+                                 fontSize: "0.8rem",
+                                 color: "rgb(220, 53, 69)",
+                                 marginTop: "3px",
+                                 marginLeft: "2rem"
+                              }}
+                           >
+                              <FontAwesomeIcon icon={faExclamationTriangle} /> Deleted
+                           </p>
+                        )}
+
+                        {!comment.isDeleted && (
+                           <EaseOutWrapper
+                              show={isHovered || isEditing}
+                              direction="bottom"
+                              style={{
+                                 display: "flex",
+                                 position: "relative",
+                                 height: "4px",
+                              }}
+                           >
+                              <div
+                                 style={{
+                                    display: "flex",
+                                    backgroundColor: "rgb(33, 37, 41)",
+                                    border: "rgb(23, 25, 27) 2px solid",
+                                    color: "rgb(137, 143, 150)",
+                                    alignItems: "center",
+                                    marginLeft: "1rem",
+                                    height: "26px",
+                                    borderRadius: (showNewReactionList && !isEditing) ? "0 0.8rem 0.8rem 0" : "0.8rem",
+                                    position: "relative",
+                                    top: "-26px",
+                                    gap: "0.6rem",
+                                    paddingInline: "0.4rem",
+                                 }}
+                              >
+                                 {isEditing ? (
+                                    <>
+                                       <FontAwesomeIcon
+                                          style={{ cursor: "pointer" }}
+                                          icon={faCircleCheck}
+                                          onClick={() => { onEditComment(comment.id, editedText); setIsEditing(false) }}
+                                       />
+                                       <FontAwesomeIcon
+                                          style={{
+                                             cursor: "pointer",
+                                          }}
+                                          icon={faCircleXmark}
+                                          onClick={() => setIsEditing(false)}
+                                       />
+                                    </>
+                                 ) : (
+                                    <>
+                                       {availableReactions.length > 0 && (
+                                          <ReactionToggleButton onClick={() => setShowNewReactionList(!showNewReactionList)} />
+                                       )}
+
+                                       {showNewReactionList && (
+                                          <div
+                                             style={{
+                                                position: "absolute",
+                                                right: "100%",
+                                             }}
+                                          >
+                                             <ReactionPicker
+                                                availableReactions={availableReactions}
+                                                onSelect={(type) => onAddReaction(comment.id, type, "comment")}
+                                             />
+                                          </div>
+                                       )}
+
+                                       <FontAwesomeIcon
+                                          style={{
+                                             cursor: "pointer",
+                                          }}
+                                          icon={faComment}
+                                          onClick={() => setIsReplying(!isReplying)}
+                                       />
+
+                                       {comment.isMine && (
+                                          <>
+                                             <FontAwesomeIcon
+                                                style={{
+                                                   cursor: "pointer",
+                                                }}
+                                                icon={faEraser}
+                                                onClick={() => onDeleteComment(comment.id)}
+                                             />
+                                             <FontAwesomeIcon
+                                                style={{
+                                                   cursor: "pointer",
+                                                }}
+                                                icon={faPenToSquare}
+                                                onClick={() => setIsEditing(true)}
+                                             />
+                                          </>
+                                       )}
+                                    </>
+                                 )}
+                              </div>
+                           </EaseOutWrapper>
+                        )}
+                     </div>
+
+                     {isEditing ? (
+                        <Form.Control
+                           as="textarea"
+                           value={editedText}
+                           onChange={(e) => setEditedText(e.target.value)}
+                           placeholder="This comment might destabilize reality..."
+                           style={{
+                              backgroundColor: "rgb(23, 25, 27)",
+                              color: "white",
+                              maxHeight: "280px",
+                           }}
+                        />
+                     ) : (
+                        <p>
+                           {comment.text}
+                           {comment.edited && (
+                              <span style={{
+                                 fontSize: "0.7rem",
+                                 color: "rgb(137, 143, 150)",
+                              }}>(edited)</span>
+                           )}
+                        </p>
+                     )}
+
+                     <ReactionList
+                        reactionCounts={comment.reactionCounts}
+                        myReactions={comment.myReactions}
+                        onAddReaction={handleAddReaction}
+                        onDeleteReaction={handleDeleteReaction}
                      />
                   </div>
                </div>
@@ -152,11 +317,10 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
 
             {isReplying && (
                <ReplyBox
-                  parentId={comment.id}
                   parentType="comment"
                   isLast={isLast}
                   isExpanded={isExpanded}
-                  onAddReply={onAddReply}
+                  onAddReply={handleAddReply}
                   onCancel={() => setIsReplying(false)}
                />
             )}
@@ -183,7 +347,9 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                               isLast={isLastReply}
                               onAddReaction={onAddReaction}
                               onDeleteReaction={onDeleteReaction}
+                              onDeleteComment={onDeleteComment}
                               onAddReply={onAddReply}
+                              onEditComment={onEditComment}
                            />
                         );
                      })}
@@ -191,7 +357,7 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                </div>
             )}
          </div>
-      </div>
+      </div >
    );
 };
 
@@ -200,76 +366,122 @@ interface PostProps {
    users: UserDto[];
    onAddReaction: (parentId: string, type: string, parentType: "post" | "comment") => void;
    onDeleteReaction: (parentId: string, reactionId: string, type: string, parentType: "post" | "comment") => void;
+   onDeleteComment: (commentId: string) => void;
    onAddReply: (parentId: string, text: string, parentType: "post" | "comment") => void;
+   onEditComment: (commentId: string, text: string) => void;
 }
 
-const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReaction, onAddReply }) => {
+const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReaction, onDeleteComment, onAddReply, onEditComment }) => {
    const [isExpanded, setIsExpanded] = useState(false);
    const [isReplying, setIsReplying] = useState(false);
+   const [isHovered, setIsHovered] = useState(false);
    const [showNewReactionList, setShowNewReactionList] = useState(false);
 
    const availableReactions = Object.keys(ReactionIcons).filter(
       (type) => !(type in post.reactionCounts)
    );
 
-   const reactionWrapperRef = useRef<HTMLDivElement>(null);
+   const handleAddReaction = (type: string) => {
+      onAddReaction(post.id, type, "post");
+   };
 
-   useEffect(() => {
-      function handleClickOutside(event: MouseEvent) {
-         if (
-            reactionWrapperRef.current &&
-            !reactionWrapperRef.current.contains(event.target as Node)
-         ) {
-            setShowNewReactionList(false);
-         }
-      }
+   const handleDeleteReaction = (reactionId: string, type: string) => {
+      onDeleteReaction(post.id, reactionId, type, "post");
+   };
 
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-         document.removeEventListener("mousedown", handleClickOutside);
-      };
-   }, []);
+   const handleAddReply = (text: string) => {
+      onAddReply(post.id, text, "post");
+   };
 
    return (
       <div key={post.id}>
-         <div style={{
-            backgroundColor: "rgb(33, 37, 41)",
-            padding: "1rem 20px",
-            marginTop: "2rem"
-         }}>
-            <h4>{post.title}</h4>
-            <p>{post.content}</p>
-            <small>
-               {new Date(post.createdAt).toLocaleString(undefined, {
-                  year: "2-digit",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,
-               })}
-            </small>
+         <div
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            style={{
+               backgroundColor: "rgb(33, 37, 41)",
+               padding: "1rem 20px",
+               marginTop: "2rem"
+            }}
+         >
+            <div style={{
+               display: "flex",
+               justifyContent: "space-between",
+            }}>
+               <h4>{post.title}</h4>
 
-            <ActionsPanel
-               availableReactions={availableReactions}
-               parentId={post.id}
-               parentType="post"
-               reactionWrapperRef={reactionWrapperRef}
-               showNewReactionList={showNewReactionList}
-               setShowNewReactionList={setShowNewReactionList}
-               reactions={{
-                  reactionCounts: post.reactionCounts,
-                  myReactions: post.myReactions
-               }}
-               onAddReaction={onAddReaction}
-               onDeleteReaction={onDeleteReaction}
-               isReplying={isReplying}
-               setIsReplying={setIsReplying}
-               style={{
-                  top: "3px",
-                  left: "2.5rem"
-               }}
-            />
+               <EaseOutWrapper
+                  show={isHovered}
+                  direction="bottom"
+                  style={{
+                     display: "flex",
+                     position: "relative",
+                     height: "4px",
+                  }}
+               >
+                  <div
+                     style={{
+                        display: "flex",
+                        backgroundColor: "rgb(33, 37, 41)",
+                        border: "rgb(23, 25, 27) 2px solid",
+                        color: "rgb(137, 143, 150)",
+                        alignItems: "center",
+                        marginLeft: "1rem",
+                        height: "26px",
+                        borderRadius: showNewReactionList ? "0 0.8rem 0.8rem 0" : "0.8rem",
+                        position: "relative",
+                        top: "-26px",
+                        gap: "0.6rem",
+                        paddingInline: "0.4rem",
+                     }}
+                  >
+                     {availableReactions.length > 0 && (
+                        <ReactionToggleButton onClick={() => setShowNewReactionList(!showNewReactionList)} />
+                     )}
+
+                     {showNewReactionList && (
+                        <div
+                           style={{
+                              position: "absolute",
+                              right: "100%",
+                           }}
+                        >
+                           <ReactionPicker
+                              availableReactions={availableReactions}
+                              onSelect={(type) => onAddReaction(post.id, type, "post")}
+                           />
+                        </div>
+                     )}
+
+                     <FontAwesomeIcon
+                        style={{
+                           cursor: "pointer",
+                        }}
+                        icon={faComment}
+                        onClick={() => setIsReplying(!isReplying)}
+                     />
+                  </div>
+               </EaseOutWrapper>
+            </div>
+
+            <p>{post.content}</p>
+            <p style={{
+               fontSize: "0.8rem",
+               color: "rgb(137, 143, 150)",
+            }}>
+               {formatTime(post.createdAt)}
+            </p>
+
+            <div style={{
+               marginLeft: "2rem"
+            }}>
+               <ReactionList
+                  reactionCounts={post.reactionCounts}
+                  myReactions={post.myReactions}
+                  onAddReaction={handleAddReaction}
+                  onDeleteReaction={handleDeleteReaction}
+               />
+            </div>
          </div>
 
          {post.comments.length > 0 && (
@@ -282,11 +494,10 @@ const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReactio
 
          {isReplying && (
             <ReplyBox
-               parentId={post.id}
                parentType="post"
                isLast={true}
                isExpanded={isExpanded}
-               onAddReply={onAddReply}
+               onAddReply={handleAddReply}
                onCancel={() => setIsReplying(false)}
             />
          )}
@@ -306,7 +517,9 @@ const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReactio
                         isLast={isLast}
                         onAddReaction={onAddReaction}
                         onDeleteReaction={onDeleteReaction}
+                        onDeleteComment={onDeleteComment}
                         onAddReply={onAddReply}
+                        onEditComment={onEditComment}
                      />
                   );
                })
@@ -341,11 +554,46 @@ const Board: React.FC = () => {
       }
    };
 
+   const handleDeleteComment = async (commentId: string) => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      console.log("deleting...");
+
+      try {
+         await axios.delete(`${API_URL}/board/comments/${commentId}`, {
+            headers: {
+               Authorization: `Bearer ${token}`
+            }
+         });
+
+         setBoardData(prev => {
+            if (!prev) return prev;
+
+            const markDeleted = (comments: CommentDto[]): CommentDto[] => {
+               return comments.map(c => {
+                  if (c.id === commentId) {
+                     return { ...c, isDeleted: true };
+                  }
+                  return { ...c, replies: markDeleted(c.replies) };
+               });
+            };
+
+            return {
+               ...prev,
+               posts: prev.posts.map(post => ({
+                  ...post,
+                  comments: markDeleted(post.comments)
+               }))
+            };
+         });
+      } catch (err) {
+         console.error("Failed to delete comment:", err);
+      }
+   };
+
    useEffect(() => {
       fetchBoard();
-
-
-      console.log(boardData);
    }, []);
 
    type ParentType = "post" | "comment";
@@ -375,7 +623,7 @@ const Board: React.FC = () => {
          const addReply = (comments: CommentDto[]): CommentDto[] => {
             return comments.map(c => {
                if (c.id === parentId && parentType === "comment") {
-                  return { ...c, replies: [...c.replies, newComment] };
+                  return { ...c, replies: [newComment, ...c.replies] };
                }
                return { ...c, replies: addReply(c.replies) };
             });
@@ -385,7 +633,7 @@ const Board: React.FC = () => {
             ...prev,
             posts: prev.posts.map(post => {
                if (parentType === "post" && post.id === parentId) {
-                  return { ...post, comments: [...post.comments, newComment] };
+                  return { ...post, comments: [newComment, ...post.comments] };
                }
                return { ...post, comments: addReply(post.comments) };
             }),
@@ -447,6 +695,42 @@ const Board: React.FC = () => {
       }
    };
 
+   const handleEditComment = async (commentId: string, text: string) => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+         const response = await axios.put(`${API_URL}/board/comments/${commentId}`, { text }, {
+            headers: { Authorization: `Bearer ${token}` },
+         });
+
+         const updatedComment: CommentDto = response.data;
+
+         setBoardData(prev => {
+            if (!prev) return prev;
+
+            const updateComment = (comments: CommentDto[]): CommentDto[] => {
+               return comments.map(c => {
+                  if (c.id === commentId) {
+                     return { ...c, text: updatedComment.text, edited: updatedComment.edited };
+                  }
+                  return { ...c, replies: updateComment(c.replies) };
+               });
+            };
+
+            return {
+               ...prev,
+               posts: prev.posts.map(post => ({
+                  ...post,
+                  comments: updateComment(post.comments)
+               })),
+            };
+         });
+      } catch (err) {
+         console.error("Failed to edit comment", err);
+      }
+   };
+
    if (!boardData) return <p>No board data</p>;
 
    return (
@@ -465,7 +749,9 @@ const Board: React.FC = () => {
                   users={boardData.users}
                   onAddReaction={handleAddReaction}
                   onDeleteReaction={handleDeleteReaction}
+                  onDeleteComment={handleDeleteComment}
                   onAddReply={handleAddReply}
+                  onEditComment={handleEditComment}
                />
             ))}
       </div>
@@ -473,63 +759,3 @@ const Board: React.FC = () => {
 };
 
 export default Board;
-
-
-
-/*
-{post.id === activePostId && (
-                           <Form onSubmit={handleCommentSubmit}>
-                              <p
-                                 style={{ color: "rgb(128, 128, 128)", margin: "4px 8px", fontSize: "90%" }}
-                              >
-                                 <FontAwesomeIcon icon={faMessage} /> Start conversation
-                              </p>
-                              <Form.Group style={{ marginBottom: "0" }}>
-                                 <Form.Control
-                                    as="textarea"
-                                    placeholder="Type your comment..."
-                                    value={newComment}
-                                    onChange={handleInputChange}
-                                    required
-                                    style={{ maxHeight: "200px", minHeight: "80px" }}
-                                 />
-                              </Form.Group>
-
-                              {(hasInvalidCharacters || countWarning !== null) && (
-                                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                    {hasInvalidCharacters ? (
-                                       <p
-                                          style={{ color: "rgb(220, 53, 69)", margin: "4px 0 0", fontSize: "90%" }}
-                                       >
-                                          <FontAwesomeIcon icon={faCircleExclamation} /> Message contains disallowed
-                                          characters
-                                       </p>
-                                    ) : (
-                                       <div />
-                                    )}
-                                    {countWarning !== null && (
-                                       <p
-                                          style={{
-                                             color: getInterpolatedColor(200 - (countWarning ?? 0)),
-                                             margin: "4px 0 0",
-                                             fontSize: "90%",
-                                          }}
-                                       >
-                                          {countWarning}
-                                       </p>
-                                    )}
-                                 </div>
-                              )}
-
-                              <Button
-                                 className="w-100"
-                                 style={{ marginTop: "1rem" }}
-                                 variant="dark"
-                                 type="submit"
-                                 disabled={newComment.length === 0 || hasInvalidCharacters || newComment.length > 200}
-                              >
-                                 <FontAwesomeIcon icon={faShare} /> Send
-                              </Button>
-                           </Form>
-                        )}
-*/

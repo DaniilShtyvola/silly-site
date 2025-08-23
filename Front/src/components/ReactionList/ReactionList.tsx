@@ -5,64 +5,73 @@ import { ReactionIcons } from "../../utils/ReactionIcons";
 interface ReactionListProps {
    reactionCounts: Record<string, number>;
    myReactions: Record<string, string>;
-   parentId: string;
-   parentType: "post" | "comment";
-   onAddReaction: (parentId: string, type: string, parentType: "post" | "comment") => void;
-   onDeleteReaction: (parentId: string, reactionId: string, type: string, parentType: "post" | "comment") => void;
+   onAddReaction: (type: string) => void;
+   onDeleteReaction: (reactionId: string, type: string) => void;
 }
 
 const ReactionList: React.FC<ReactionListProps> = ({
    reactionCounts,
    myReactions,
-   parentId,
-   parentType,
    onAddReaction,
    onDeleteReaction,
 }) => {
    return (
-      <>
-         {Object.keys(reactionCounts).length > 0 &&
-            Object.entries(reactionCounts).map(([reactionType, count], index) => {
-               const icon = ReactionIcons[reactionType as keyof typeof ReactionIcons];
-               if (!icon) return null;
+      <div style={{
+         height: "0px",
+      }}>
+         <div style={{
+            display: "inline-flex",
+            gap: "0.4rem",
+            backgroundColor: "rgb(33, 37, 41)",
+            borderRadius: "0.8rem",
+            position: "relative",
+            top: "2px",
+            border: "rgb(23, 25, 27) 2px solid"
+         }}>
+            {Object.keys(reactionCounts).length > 0 &&
+               Object.entries(reactionCounts).map(([reactionType, count], index) => {
+                  const icon = ReactionIcons[reactionType as keyof typeof ReactionIcons];
+                  if (!icon) return null;
 
-               const isMyReaction = !!myReactions[reactionType];
+                  const isMyReaction = !!myReactions[reactionType];
 
-               const handleReactionClick = () => {
-                  if (isMyReaction) {
-                     const reactionId = myReactions[reactionType];
-                     onDeleteReaction(parentId, reactionId, reactionType, parentType);
-                  } else {
-                     onAddReaction(parentId, reactionType, parentType);
-                  }
-               };
+                  const handleReactionClick = () => {
+                     const isMyReaction = !!myReactions[reactionType];
 
-               return (
-                  <div
-                     key={index}
-                     style={{
-                        marginRight: "0.4rem",
-                        display: "flex",
-                        alignItems: "center",
-                        backgroundColor: isMyReaction ? "rgb(43, 66, 50)" : "rgb(23, 25, 27)",
-                        border: isMyReaction
-                           ? "rgb(40, 167, 69) 2px solid"
-                           : "rgb(33, 37, 41) 2px solid",
-                        paddingInline: "6px",
-                        borderRadius: "1rem",
-                        color: isMyReaction ? "white" : "rgb(137, 143, 150)",
-                        gap: "4px",
-                        height: "26px",
-                        cursor: "pointer",
-                     }}
-                     onClick={handleReactionClick}
-                  >
-                     <FontAwesomeIcon icon={icon} />
-                     <p style={{ marginTop: "1px" }}>{count}</p>
-                  </div>
-               );
-            })}
-      </>
+                     if (isMyReaction) {
+                        const reactionId = myReactions[reactionType];
+                        onDeleteReaction(reactionId, reactionType);
+                     } else {
+                        onAddReaction(reactionType);
+                     }
+                  };
+
+                  return (
+                     <div
+                        key={index}
+                        style={{
+                           display: "flex",
+                           alignItems: "center",
+                           backgroundColor: isMyReaction ? "rgb(43, 66, 50)" : "rgb(33, 37, 41)",
+                           border: isMyReaction
+                              ? "rgb(40, 167, 69) 2px solid"
+                              : "rgb(33, 37, 41) 2px solid",
+                           paddingInline: "3px",
+                           borderRadius: "0.8rem",
+                           color: isMyReaction ? "white" : "rgb(137, 143, 150)",
+                           gap: "2px",
+                           height: "22px",
+                           cursor: "pointer",
+                        }}
+                        onClick={handleReactionClick}
+                     >
+                        <FontAwesomeIcon icon={icon} />
+                        <p style={{ marginTop: "1px" }}>{count}</p>
+                     </div>
+                  );
+               })}
+         </div>
+      </div>
    );
 };
 

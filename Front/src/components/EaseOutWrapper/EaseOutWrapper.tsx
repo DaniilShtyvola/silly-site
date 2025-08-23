@@ -1,40 +1,36 @@
-import React, { useState, useEffect, CSSProperties } from 'react';
-
-import './EaseOutWrapper.css';
+import React, { CSSProperties } from "react";
+import "./EaseOutWrapper.css";
 
 interface EaseOutWrapperProps {
     children: React.ReactNode;
     show: boolean;
     duration?: number;
     style?: CSSProperties;
+    direction?: "top" | "bottom";
 }
 
-const EaseOutWrapper: React.FC<EaseOutWrapperProps> = ({ children, show, duration = 400, style = {} }) => {
-    const [isVisible, setIsVisible] = useState<boolean>(show);
-
-    useEffect(() => {
-        if (show) {
-            setIsVisible(true);
-        } else {
-            const timer = setTimeout(() => {
-                setIsVisible(false);
-            }, duration);
-            return () => clearTimeout(timer);
-        }
-    }, [show, duration]);
-
+const EaseOutWrapper: React.FC<EaseOutWrapperProps> = ({
+    children,
+    show,
+    duration = 400,
+    style = {},
+    direction = "top",
+}) => {
     return (
-        isVisible && (
-            <div
-                className={show ? "slide-in-top" : "slide-out-top"}
-                style={{
-                    animationDuration: `${duration}ms`,
-                    ...style,
-                }}
-            >
-                {children}
-            </div>
-        )
+        <div
+            style={{
+                transition: `opacity ${duration}ms ease, transform ${duration}ms ease`,
+                opacity: show ? 1 : 0,
+                transform: show
+                    ? "translateY(0)"
+                    : direction === "top"
+                        ? "translateY(-10px)"
+                        : "translateY(10px)",
+                ...style,
+            }}
+        >
+            {children}
+        </div>
     );
 };
 

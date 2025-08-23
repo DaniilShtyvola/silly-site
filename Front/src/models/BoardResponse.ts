@@ -11,7 +11,11 @@ export type CommentDto = {
     userId: string;
     text: string | null;
     createdAt: string;
+
     edited: string | null;
+    isMine: boolean;
+    isDeleted: boolean;
+
     reactionCounts: Record<string, number> | {};
     myReactions: Record<string, string> | {};
     replies: CommentDto[];

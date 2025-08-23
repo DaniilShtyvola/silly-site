@@ -10,16 +10,14 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 interface ReplyBoxProps {
-    parentId: string;
     parentType: "post" | "comment";
     isLast: boolean;
     isExpanded: boolean;
-    onAddReply: (parentId: string, text: string, parentType: "post" | "comment") => void;
+    onAddReply: (text: string) => void;
     onCancel: () => void;
 }
 
 const ReplyBox: React.FC<ReplyBoxProps> = ({
-    parentId,
     parentType,
     isLast,
     isExpanded,
@@ -76,7 +74,7 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({
                         flexShrink: 0,
                     }}
                 />
-                
+
                 <div
                     style={{
                         padding: "1rem",
@@ -84,6 +82,7 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({
                         marginTop: "1.4rem",
                     }}
                 >
+                    {/* Text area */}
                     <Form.Control
                         as="textarea"
                         value={replyText}
@@ -145,55 +144,38 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({
                                 backgroundColor: "rgb(33, 37, 41)",
                                 border: "rgb(33, 37, 41) 2px solid",
                                 color: "rgb(137, 143, 150)",
-                                paddingInline: "6px",
-                                borderRadius: "1rem",
                                 alignItems: "center",
-                                cursor: "pointer",
                                 marginLeft: "1rem",
                                 height: "26px",
+                                borderRadius: "1rem",
                             }}
-                            onClick={onCancel}
                         >
+                            {/* Cancel button */}
                             <FontAwesomeIcon
                                 icon={faXmark}
                                 style={{
-                                    fontSize: "1.2rem",
-                                    borderRadius: "1rem",
+                                    padding: "0.4rem",
+                                    cursor: "pointer",
+                                    fontSize: "1.2rem"
                                 }}
+                                onClick={onCancel}
                             />
-                        </div>
 
-                        {/* Send button */}
-                        <div
-                            style={{
-                                display: "flex",
-                                backgroundColor: "rgb(33, 37, 41)",
-                                border: "rgb(33, 37, 41) 2px solid",
-                                color: "rgb(137, 143, 150)",
-                                paddingInline: "6px",
-                                borderRadius: "1rem",
-                                alignItems: "center",
-                                cursor: "pointer",
-                                marginLeft: "1rem",
-                                height: "26px",
-                            }}
-                            onClick={() => {
-                                if (replyText.trim().length > 0 && !hasInvalidCharacters) {
-                                    onAddReply(parentId, replyText, parentType);
-                                    setReplyText("");
-                                    onCancel();
-                                }
-                            }}
-                        >
+                            {/* Send button */}
                             <FontAwesomeIcon
                                 icon={faShare}
                                 style={{
-                                    fontSize: "1.2rem",
-                                    borderRadius: "1rem",
-                                    marginRight: "0.4rem",
+                                    padding: "0.4rem",
+                                    cursor: "pointer",
+                                }}
+                                onClick={() => {
+                                    if (replyText.trim().length > 0 && !hasInvalidCharacters) {
+                                        onAddReply(replyText);
+                                        setReplyText("");
+                                        onCancel();
+                                    }
                                 }}
                             />
-                            <p>Send</p>
                         </div>
                     </div>
                 </div>

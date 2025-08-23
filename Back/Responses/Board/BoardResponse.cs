@@ -20,10 +20,13 @@ public class PostWithCommentsDto
 public class CommentDto
 {
     public Guid Id { get; set; }
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
     public string? Text { get; set; }
     public DateTime CreatedAt { get; set; }
+
     public DateTime? Edited { get; set; }
+    public bool IsDeleted { get; set; }
+    public bool IsMine { get; set; }
 
     public Dictionary<string, int> ReactionCounts { get; set; } = new();
     public Dictionary<string, string> MyReactions { get; set; } = new();

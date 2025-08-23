@@ -12,7 +12,8 @@ type AvatarIconPickerProps = {
 
 const excludedIcons = new Set([
     AvatarIcons.user,
-    AvatarIcons.star
+    AvatarIcons.star,
+    AvatarIcons.xMark,
 ]);
 
 const AvatarIconPicker: React.FC<AvatarIconPickerProps> = ({ selectedIcon, onSelect }) => {

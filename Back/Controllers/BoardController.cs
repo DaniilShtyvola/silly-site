@@ -70,6 +70,8 @@ public class BoardController : ControllerBase
             Text = comment.Text,
             CreatedAt = comment.CreatedAt,
             Edited = comment.Edited,
+            IsMine = true,
+            IsDeleted = false,
             ReactionCounts = new Dictionary<string, int>(),
             MyReactions = new Dictionary<string, string>(),
             Replies = new List<CommentDto>()
@@ -89,17 +91,13 @@ public class BoardController : ControllerBase
         if (user == null) return Unauthorized();
 
         var comment = await _context.Comments
+            .Include(c => c.Replies)
             .FirstOrDefaultAsync(c => c.Id == id && c.UserId == user.Id);
 
         if (comment == null)
             return NotFound("Comment not found or not owned by user");
 
-        var reactions = await _context.Reactions
-            .Where(r => r.CommentId == comment.Id)
-            .ToListAsync();
-
-        _context.Reactions.RemoveRange(reactions);
-        _context.Comments.Remove(comment);
+        comment.IsDeleted = true;
 
         await _context.SaveChangesAsync();
 
@@ -238,12 +236,14 @@ public class BoardController : ControllerBase
     {
         var userName = GetUserName();
         Guid? currentUserId = null;
+        bool isAdmin = IsAdmin();
+        User? currentUser = null;
 
         if (userName != null)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
-            if (user == null) return Unauthorized();
-            currentUserId = user.Id;
+            currentUser = await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
+            if (currentUser == null) return Unauthorized();
+            currentUserId = currentUser.Id;
         }
 
         var totalPosts = await _context.Posts.CountAsync();
@@ -268,6 +268,7 @@ public class BoardController : ControllerBase
 
         var comments = await _context.Comments
             .Include(c => c.User)
+            .Include(c => c.Replies)
             .Where(c => postIds.Contains(c.PostId))
             .ToListAsync();
 
@@ -284,46 +285,14 @@ public class BoardController : ControllerBase
             .Where(r => r.CommentId.HasValue)
             .ToLookup(r => r.CommentId.Value);
 
-        var usersById = comments
-            .Select(c => c.User)
-            .Distinct()
-            .ToDictionary(u => u.Id, u => new UserDto
-            {
-                Id = u.Id,
-                UserName = u.UserName,
-                Style = new UserStyleDto
-                {
-                    AvatarIcon = u.AvatarIcon ?? "user",
-                    AvatarColor = u.AvatarColor ?? "898F96",
-                    AvatarDirection = u.AvatarDirection ?? "to right",
-                    UserNameColor = u.UserNameColor ?? "898F96"
-                }
-            });
-
-        if (currentUserId.HasValue && !usersById.ContainsKey(currentUserId.Value))
-        {
-            var currentUser = await _context.Users.FindAsync(currentUserId.Value);
-            if (currentUser != null)
-            {
-                usersById[currentUser.Id] = new UserDto
-                {
-                    Id = currentUser.Id,
-                    UserName = currentUser.UserName,
-                    Style = new UserStyleDto
-                    {
-                        AvatarIcon = currentUser.AvatarIcon ?? "user",
-                        AvatarColor = currentUser.AvatarColor ?? "898F96",
-                        AvatarDirection = currentUser.AvatarDirection ?? "to right",
-                        UserNameColor = currentUser.UserNameColor ?? "898F96"
-                    }
-                };
-            }
-        }
+        var usersById = new Dictionary<Guid, UserDto>();
 
         var commentDtos = comments.Select(c =>
         {
-            var commentReactions = reactionsByCommentId[c.Id];
+            bool isMine = currentUserId.HasValue && c.UserId == currentUserId.Value;
+            bool canSeeFull = isAdmin || isMine;
 
+            var commentReactions = reactionsByCommentId[c.Id];
             var reactionCounts = commentReactions
                 .GroupBy(r => r.Type)
                 .ToDictionary(g => g.Key, g => g.Count());
@@ -334,26 +303,70 @@ public class BoardController : ControllerBase
                     .ToDictionary(r => r.Type, r => r.Id.ToString())
                 : new Dictionary<string, string>();
 
+            Guid? userIdToShow = c.UserId;
+            string? textToShow = c.Text;
+
+            if (c.IsDeleted)
+            {
+                if (!c.Replies.Any())
+                {
+                    if (!canSeeFull) return null;
+                }
+                else
+                {
+                    if (!canSeeFull)
+                    {
+                        userIdToShow = null;
+                        textToShow = "[deleted]";
+                    }
+                }
+            }
+
+            if (userIdToShow.HasValue && !usersById.ContainsKey(userIdToShow.Value))
+            {
+                var u = c.User;
+                usersById[userIdToShow.Value] = new UserDto
+                {
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    Style = new UserStyleDto
+                    {
+                        AvatarIcon = u.AvatarIcon ?? "user",
+                        AvatarColor = u.AvatarColor ?? "898F96",
+                        AvatarDirection = u.AvatarDirection ?? "to right",
+                        UserNameColor = u.UserNameColor ?? "898F96"
+                    }
+                };
+            }
+
             return new CommentDto
             {
                 Id = c.Id,
-                UserId = c.UserId,
-                Text = c.Text,
+                UserId = userIdToShow,
+                Text = textToShow,
                 CreatedAt = c.CreatedAt,
                 Edited = c.Edited,
+                IsDeleted = c.IsDeleted,
+                IsMine = isMine,
                 ReactionCounts = reactionCounts,
                 MyReactions = myReactions,
                 Replies = new List<CommentDto>()
             };
-        }).ToList();
+        })
+        .Where(c => c != null)
+        .ToList()!;
 
         var commentDict = commentDtos.ToDictionary(c => c.Id);
 
-        foreach (var c in comments)
+        foreach (var c in comments.OrderByDescending(x => x.CreatedAt))
         {
-            if (c.ParentCommentId.HasValue && commentDict.ContainsKey(c.ParentCommentId.Value))
+            if (c.ParentCommentId.HasValue && commentDict.ContainsKey(c.Id) && commentDict.ContainsKey(c.ParentCommentId.Value))
             {
                 commentDict[c.ParentCommentId.Value].Replies.Add(commentDict[c.Id]);
+                commentDict[c.ParentCommentId.Value].Replies = commentDict[c.ParentCommentId.Value]
+                    .Replies
+                    .OrderByDescending(r => r.CreatedAt)
+                    .ToList();
             }
         }
 
@@ -389,6 +402,22 @@ public class BoardController : ControllerBase
                     .ToList() ?? new List<CommentDto>()
             };
         }).ToList();
+
+        if (currentUser != null && !usersById.ContainsKey(currentUser.Id))
+        {
+            usersById[currentUser.Id] = new UserDto
+            {
+                Id = currentUser.Id,
+                UserName = currentUser.UserName,
+                Style = new UserStyleDto
+                {
+                    AvatarIcon = currentUser.AvatarIcon ?? "user",
+                    AvatarColor = currentUser.AvatarColor ?? "898F96",
+                    AvatarDirection = currentUser.AvatarDirection ?? "to right",
+                    UserNameColor = currentUser.UserNameColor ?? "898F96"
+                }
+            };
+        }
 
         var response = new BoardResponse
         {

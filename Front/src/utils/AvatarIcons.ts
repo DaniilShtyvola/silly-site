@@ -28,12 +28,14 @@ import {
     faMusic,
     faGamepad,
     faGauge,
-    faBatteryFull
+    faBatteryFull,
+    faXmark
 } from "@fortawesome/free-solid-svg-icons";
 
 export const AvatarIcons = {
     user: faUser,
     star: faStar,
+    xMark: faXmark,
 
     cat: faCat,
     crow: faCrow,

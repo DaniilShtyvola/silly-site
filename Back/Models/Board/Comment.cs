@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 public class Comment
 {
@@ -7,10 +6,9 @@ public class Comment
     public Guid Id { get; set; } = Guid.NewGuid();
 
     public string? Text { get; set; }
-
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
     public DateTime? Edited { get; set; }
+    public bool IsDeleted { get; set; }
 
     [Required]
     public Guid UserId { get; set; }
