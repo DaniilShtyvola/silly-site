@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { ReactionIcons } from "../../utils/ReactionIcons";
@@ -46,6 +48,15 @@ const ReactionList: React.FC<ReactionListProps> = ({
                      }
                   };
 
+                  const [hovered, setHovered] = useState(false);
+
+                  const getColor = () => {
+                     if (isMyReaction) {
+                        return hovered ? "rgb(186, 191, 196)" : "white";
+                     }
+                     return hovered ? "rgb(186, 191, 196)" : "rgb(137, 143, 150)";
+                  };
+
                   return (
                      <div
                         key={index}
@@ -58,12 +69,15 @@ const ReactionList: React.FC<ReactionListProps> = ({
                               : "rgb(33, 37, 41) 2px solid",
                            paddingInline: "3px",
                            borderRadius: "0.8rem",
-                           color: isMyReaction ? "white" : "rgb(137, 143, 150)",
                            gap: "2px",
                            height: "22px",
                            cursor: "pointer",
+                           color: getColor(),
+                           transition: "color 0.2s ease",
                         }}
                         onClick={handleReactionClick}
+                        onMouseEnter={() => setHovered(true)}
+                        onMouseLeave={() => setHovered(false)}
                      >
                         <FontAwesomeIcon icon={icon} />
                         <p style={{ marginTop: "1px" }}>{count}</p>

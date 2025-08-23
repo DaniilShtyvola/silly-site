@@ -1,0 +1,9 @@
+.expand-toggle-hover {
+    cursor: pointer;
+    transition: color 0.2s ease;
+    color: rgb(49, 53, 58);
+}
+
+.expand-toggle-hover:hover {
+    color: rgb(68, 71, 75);
+}

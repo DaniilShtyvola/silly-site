@@ -4,7 +4,7 @@ import { Form } from "react-bootstrap";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faXmark,
+    faCircleXmark,
     faShare,
     faCircleExclamation
 } from "@fortawesome/free-solid-svg-icons";
@@ -25,17 +25,18 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({
     onCancel,
 }) => {
     const [replyText, setReplyText] = useState("");
-    const allowedRegex = /^[0-9A-Za-zА-ЩЬЮЯҐЄІЇа-щьюяґєії !"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~\n\r\t]*$/u;
-    const [hasInvalidCharacters, setHasInvalidCharacters] = useState(false);
     const [countWarning, setCountWarning] = useState<number | null>(null);
+
+    const forbiddenRegex = /[ыъэё]/iu;
+    const [hasInvalidCharacters, setHasInvalidCharacters] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const input = e.target.value;
 
-        setHasInvalidCharacters(!allowedRegex.test(input));
+        setHasInvalidCharacters(forbiddenRegex.test(input));
 
-        if (input.length >= 150) {
-            setCountWarning(200 - input.length);
+        if (input.length >= 300) {
+            setCountWarning(400 - input.length);
         } else {
             setCountWarning(null);
         }
@@ -44,11 +45,27 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({
     };
 
     const getInterpolatedColor = (count: number): string => {
-        const progress = Math.min((count - 150) / 50, 1);
-        const r = Math.round(128 + (220 - 128) * progress);
-        const g = Math.round(128 + (53 - 128) * progress);
-        const b = Math.round(128 + (69 - 128) * progress);
+        if (count <= 0) {
+            return 'rgb(137, 143, 150)';
+        }
+
+        const progress = Math.min(count / 50, 1);
+        const r = Math.round(137 + (220 - 137) * progress);
+        const g = Math.round(143 + (53 - 143) * progress);
+        const b = Math.round(150 + (69 - 150) * progress);
         return `rgb(${r}, ${g}, ${b})`;
+    };
+
+    const handleSendClick = () => {
+        const isTextValid = replyText.trim().length > 0
+            && replyText.length <= 400
+            && !hasInvalidCharacters;
+
+        if (isTextValid) {
+            onAddReply(replyText);
+            setReplyText("");
+            onCancel();
+        }
     };
 
     return (
@@ -82,6 +99,48 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({
                         marginTop: "1.4rem",
                     }}
                 >
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        height: "6px",
+                    }}>
+                        <div
+                            style={{
+                                display: "flex",
+                                position: "relative",
+                                backgroundColor: "rgb(33, 37, 41)",
+                                border: "rgb(23, 25, 27) 2px solid",
+                                color: "rgb(137, 143, 150)",
+                                alignItems: "center",
+                                marginLeft: "1rem",
+                                height: "26px",
+                                borderRadius: "0.8rem",
+                                top: "-26px",
+                                paddingInline: "0.1rem",
+                            }}
+                        >
+                            {/* Cancel button */}
+                            <FontAwesomeIcon
+                                icon={faCircleXmark}
+                                onClick={onCancel}
+                                className="icon-hover"
+                                style={{
+                                    paddingInline: "0.3rem"
+                                }}
+                            />
+
+                            {/* Send button */}
+                            <FontAwesomeIcon
+                                icon={faShare}
+                                onClick={handleSendClick}
+                                className="icon-hover"
+                                style={{
+                                    paddingInline: "0.3rem"
+                                }}
+                            />
+                        </div>
+                    </div>
+
                     {/* Text area */}
                     <Form.Control
                         as="textarea"
@@ -91,9 +150,14 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({
                         style={{
                             backgroundColor: "rgb(23, 25, 27)",
                             color: "white",
-                            width: "340px",
-                            maxHeight: "280px",
-                            height: "120px"
+                            boxSizing: "border-box",
+                            resize: "both",
+                            overflow: "auto",
+                            minWidth: "12rem",
+                            minHeight: "4rem",
+                            maxWidth: "32rem",
+                            maxHeight: "32rem",
+                            width: "24rem"
                         }}
                     />
 
@@ -117,9 +181,10 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({
                             {countWarning !== null && (
                                 <p
                                     style={{
-                                        color: getInterpolatedColor(200 - (countWarning ?? 0)),
+                                        color: getInterpolatedColor(50 - (countWarning ?? 0)),
                                         margin: "4px 0 0",
                                         fontSize: "90%",
+                                        fontWeight: "bold"
                                     }}
                                 >
                                     {countWarning}
@@ -127,57 +192,6 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({
                             )}
                         </div>
                     )}
-
-                    <div
-                        style={{
-                            display: "flex",
-                            position: "relative",
-                            height: "6px",
-                            top: "6px",
-                            justifyContent: "flex-end",
-                        }}
-                    >
-                        {/* Cancel button */}
-                        <div
-                            style={{
-                                display: "flex",
-                                backgroundColor: "rgb(33, 37, 41)",
-                                border: "rgb(33, 37, 41) 2px solid",
-                                color: "rgb(137, 143, 150)",
-                                alignItems: "center",
-                                marginLeft: "1rem",
-                                height: "26px",
-                                borderRadius: "1rem",
-                            }}
-                        >
-                            {/* Cancel button */}
-                            <FontAwesomeIcon
-                                icon={faXmark}
-                                style={{
-                                    padding: "0.4rem",
-                                    cursor: "pointer",
-                                    fontSize: "1.2rem"
-                                }}
-                                onClick={onCancel}
-                            />
-
-                            {/* Send button */}
-                            <FontAwesomeIcon
-                                icon={faShare}
-                                style={{
-                                    padding: "0.4rem",
-                                    cursor: "pointer",
-                                }}
-                                onClick={() => {
-                                    if (replyText.trim().length > 0 && !hasInvalidCharacters) {
-                                        onAddReply(replyText);
-                                        setReplyText("");
-                                        onCancel();
-                                    }
-                                }}
-                            />
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

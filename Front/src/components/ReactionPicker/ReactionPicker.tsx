@@ -20,8 +20,7 @@ const ReactionPicker: React.FC<ReactionPickerProps> = ({
             borderRadius: "0.8rem 0 0 0.8rem",
             height: "26px",
             alignItems: "center",
-            gap: "0.6rem",
-            paddingInline: "0.4rem",
+            paddingInline: "0.1rem",
          }}
       >
          {availableReactions.map((type) => {
@@ -30,7 +29,6 @@ const ReactionPicker: React.FC<ReactionPickerProps> = ({
                <div
                   key={type}
                   style={{
-                     cursor: "pointer",
                      display: "flex",
                      alignItems: "center",
                      color: "rgb(137, 143, 150)",
@@ -39,7 +37,13 @@ const ReactionPicker: React.FC<ReactionPickerProps> = ({
                      onSelect(type);
                   }}
                >
-                  <FontAwesomeIcon icon={icon} />
+                  <FontAwesomeIcon
+                     icon={icon}
+                     className="icon-hover"
+                     style={{
+                        paddingInline: "0.3rem",
+                     }}
+                  />
                </div>
             );
          })}

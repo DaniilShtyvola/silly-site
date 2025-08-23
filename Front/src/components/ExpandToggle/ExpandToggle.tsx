@@ -1,3 +1,5 @@
+import "./ExpandToggle.css"
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
    faCircleChevronDown,
@@ -17,16 +19,15 @@ const ExpandToggle: React.FC<ExpandToggleProps> = ({ isExpanded, onToggle, left 
             icon={isExpanded ? faCircleChevronUp : faCircleChevronDown}
             style={{
                fontSize: "1.2rem",
-               color: "rgb(49, 53, 58)",
                position: "relative",
                backgroundColor: "rgb(23, 25, 27)",
                padding: "4px",
                left: left,
                top: "-0.8rem",
                borderRadius: "1rem",
-               cursor: "pointer",
             }}
             onClick={onToggle}
+            className="expand-toggle-hover"
          />
       </div>
    );

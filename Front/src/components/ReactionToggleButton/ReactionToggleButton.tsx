@@ -11,11 +11,12 @@ const ReactionToggleButton: React.FC<ReactionToggleButtonProps> = ({ onClick }) 
             onClick={onClick}
             style={{
                 position: "relative",
-                paddingRight: "0.45rem",
+                paddingInline: "0.3rem 0.75rem",
                 cursor: "pointer",
                 alignItems: "center",
                 display: "flex",
             }}
+            className="icon-hover"
         >
             <FontAwesomeIcon
                 icon={faFaceMehBlank}

@@ -41,3 +41,27 @@ html, body, #root {
 .btn-dark:hover {
     background-color: rgb(68, 71, 75);
 }
+
+textarea::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+textarea::-webkit-scrollbar-track {
+    background: rgb(33, 37, 41);
+    border-radius: 4px;
+}
+
+textarea::-webkit-scrollbar-thumb {
+    background-color: rgb(33, 37, 41);
+    border-radius: 1rem;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(68, 71, 75);
+}
+
+textarea {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(68, 71, 75) rgb(33, 37, 41);
+}

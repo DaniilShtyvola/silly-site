@@ -56,7 +56,9 @@ const AvatarIconPicker: React.FC<AvatarIconPickerProps> = ({ selectedIcon, onSel
                                 display: "flex",
                                 justifyContent: "center",
                                 alignItems: "center",
-                                color: getColor()
+                                color: getColor(),
+                                transition: "color 0.2s ease",
+                                fontSize: "1.1rem"
                             }}
                             title={key}
                             tabIndex={0}
@@ -66,13 +68,7 @@ const AvatarIconPicker: React.FC<AvatarIconPickerProps> = ({ selectedIcon, onSel
                             onMouseEnter={() => setHovered(true)}
                             onMouseLeave={() => setHovered(false)}
                         >
-                            <FontAwesomeIcon
-                                icon={icon}
-                                style={{
-                                    transition: "color 0.2s ease",
-                                    fontSize: "1.1rem"
-                                }}
-                            />
+                            <FontAwesomeIcon icon={icon}/>
                         </div>
                     );
                 })}
