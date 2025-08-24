@@ -8,9 +8,9 @@
 public class PostWithCommentsDto
 {
     public Guid Id { get; set; }
-    public string Title { get; set; }
-    public string Content { get; set; }
+    public string ContentJson { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool IsPinned { get; set; }
 
     public Dictionary<string, int> ReactionCounts { get; set; } = new();
     public Dictionary<string, string> MyReactions { get; set; } = new();

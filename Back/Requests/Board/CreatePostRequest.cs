@@ -1,5 +1,5 @@
 ﻿public class CreatePostRequest
 {
-    public string Title { get; set; }
-    public string? Content { get; set; }
+    public string? ContentJson { get; set; }
+    public bool IsPinned { get; set; } = false;
 }

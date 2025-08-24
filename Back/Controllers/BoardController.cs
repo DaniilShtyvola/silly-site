@@ -135,13 +135,13 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> AddPost([FromBody] CreatePostRequest request)
     {
         //if (!IsAdmin())
-        //return Forbid();
+            //return Forbid();
 
         var post = new Post
         {
             Id = Guid.NewGuid(),
-            Title = request.Title,
-            Content = request.Content,
+            ContentJson = request.ContentJson,
+            IsPinned = request.IsPinned,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -232,7 +232,7 @@ public class BoardController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetBoard([FromQuery] int skip = 0, [FromQuery] int take = 10)
+    public async Task<IActionResult> GetBoard([FromQuery] int skip = 0, [FromQuery] int take = 4)
     {
         var userName = GetUserName();
         Guid? currentUserId = null;
@@ -249,7 +249,8 @@ public class BoardController : ControllerBase
         var totalPosts = await _context.Posts.CountAsync();
 
         var posts = await _context.Posts
-            .OrderByDescending(p => p.CreatedAt)
+            .OrderByDescending(p => p.IsPinned)
+            .ThenByDescending(p => p.CreatedAt)
             .Skip(skip)
             .Take(take)
             .ToListAsync();
@@ -391,9 +392,9 @@ public class BoardController : ControllerBase
             return new PostWithCommentsDto
             {
                 Id = post.Id,
-                Title = post.Title,
-                Content = post.Content,
+                ContentJson = post.ContentJson,
                 CreatedAt = post.CreatedAt,
+                IsPinned = post.IsPinned,
                 ReactionCounts = reactionCounts,
                 MyReactions = myReactions,
                 Comments = commentsByPostId

@@ -66,7 +66,7 @@ Font size should depend on importance:
 </Button>
 ```
 
-> Exeption:
+> Exception:
 ```tsx
 <div style={{ 
     marginTop: "10px" 

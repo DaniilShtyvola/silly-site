@@ -1,12 +1,12 @@
 import { UserStyleDto } from "./UserStyle";
 
-export type UserDto = {
+export type User = {
     id: string;
     userName: string;
     style: UserStyleDto;
 };
 
-export type CommentDto = {
+export type Comment = {
     id: string;
     userId: string;
     text: string | null;
@@ -18,21 +18,45 @@ export type CommentDto = {
 
     reactionCounts: Record<string, number> | {};
     myReactions: Record<string, string> | {};
-    replies: CommentDto[];
+    replies: Comment[];
 };
 
-export type PostWithCommentsDto = {
+export type PostDto = {
     id: string;
-    title: string;
-    content: string;
+    contentJson: string;
     createdAt: string;
+    isPinned: boolean;
     reactionCounts: Record<string, number> | {};
     myReactions: Record<string, string> | {};
-    comments: CommentDto[];
+    comments: Comment[];
 };
 
-export type BoardResponseDto = {
-    posts: PostWithCommentsDto[];
-    users: UserDto[];
+export type SectionType = "text" | "image";
+
+export type PostSection = {
+    type: SectionType;
+    content: string;
+    style?: Record<string, string>;
+};
+
+export type Post = {
+    id: string;
+    sections: PostSection[];
+    createdAt: string;
+    isPinned: boolean;
+    reactionCounts: Record<string, number> | {};
+    myReactions: Record<string, string> | {};
+    comments: Comment[];
+};
+
+export type BoardDto = {
+    posts: PostDto[];
+    users: User[];
+    totalPosts: number;
+};
+
+export type Board = {
+    posts: Post[];
+    users: User[];
     totalPosts: number;
 };

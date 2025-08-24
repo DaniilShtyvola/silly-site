@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 
 import "./Board.css";
 
-import { Form } from "react-bootstrap";
+import { Form, Spinner, Button } from "react-bootstrap";
 
 import axios from "axios";
 
@@ -17,6 +17,7 @@ import {
    faCircleCheck,
    faFaceLaugh,
    faFaceSadTear,
+   faDownload,
 } from "@fortawesome/free-solid-svg-icons";
 
 import GradientUsername from "../../components/GradientUsername/GradientUsername.tsx";
@@ -29,7 +30,7 @@ import ReactionPicker from "../../components/ReactionPicker/ReactionPicker.tsx";
 import ReactionList from "../../components/ReactionList/ReactionList.tsx";
 import FixedMessage from "../../components/FixedMessage/FixedMessage.tsx";
 
-import type { BoardResponseDto, CommentDto, UserDto, PostWithCommentsDto } from "../../models/BoardResponse.ts";
+import type { Board, Comment, User, Post, BoardDto } from "../../models/BoardResponse.ts";
 import { UserStyle } from "../../models/UserStyle.ts";
 
 import { formatTime } from "../../utils/FormatTime.ts";
@@ -37,12 +38,13 @@ import { parseStyle } from "../../utils/ParseStyle.ts";
 import { ReactionIcons } from "../../utils/ReactionIcons";
 import { updateReactionsInBoard } from "../../utils/UpdateCommentReactions.ts";
 import { AvatarIcons } from "../../utils/AvatarIcons.ts";
+import { parsePosts } from "../../utils/ParsePosts.ts";
 
 type ParentType = "post" | "comment";
 
 interface CommentProps {
-   comment: CommentDto;
-   users: UserDto[];
+   comment: Comment;
+   users: User[];
    isLast: boolean;
    onAddReaction: (parentId: string, type: string, parentType: ParentType) => void;
    onDeleteReaction: (parentId: string, reactionId: string, type: string, parentType: ParentType) => void;
@@ -207,6 +209,7 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                            </p>
                         </div>
 
+                        {/* Label to mark deleted comments */}
                         {(comment.isDeleted && comment.userId != null) && (
                            <p
                               style={{
@@ -220,6 +223,7 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                            </p>
                         )}
 
+                        {/* Control panel at the top right corner */}
                         {!comment.isDeleted && (
                            <EaseOutWrapper
                               show={isHovered || isEditing}
@@ -247,6 +251,7 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                               >
                                  {isEditing ? (
                                     <>
+                                       {/* Confrim and cancel edit buttons */}
                                        <FontAwesomeIcon
                                           icon={faCircleCheck}
                                           onClick={() => { onEditComment(comment.id, editedText); setIsEditing(false) }}
@@ -266,10 +271,12 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                                     </>
                                  ) : (
                                     <>
+                                       {/* Add reaction button */}
                                        {availableReactions.length > 0 && (
                                           <ReactionToggleButton onClick={() => setShowNewReactionList(!showNewReactionList)} />
                                        )}
 
+                                       {/* Available reactions list */}
                                        {showNewReactionList && (
                                           <div
                                              style={{
@@ -284,6 +291,7 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                                           </div>
                                        )}
 
+                                       {/* Reply and cancel reply buttons */}
                                        {isReplying ? (
                                           <FontAwesomeIcon
                                              icon={faCircleXmark}
@@ -304,6 +312,7 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                                           />
                                        )}
 
+                                       {/* Edit and delete buttons */}
                                        {comment.isMine && (
                                           <>
                                              <FontAwesomeIcon
@@ -331,6 +340,7 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                         )}
                      </div>
 
+                     {/* Field to edit comment */}
                      {isEditing ? (
                         <Form.Control
                            as="textarea"
@@ -368,6 +378,7 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                         </p>
                      )}
 
+                     {/* Reaction list */}
                      <ReactionList
                         reactionCounts={comment.reactionCounts}
                         myReactions={comment.myReactions}
@@ -378,6 +389,7 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                </div>
             </div>
 
+            {/* Button to open replies */}
             {comment.replies.length > 0 && (
                <ExpandToggle
                   isExpanded={isExpanded}
@@ -386,6 +398,7 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                />
             )}
 
+            {/* Field to write reply */}
             {isReplying && (
                <ReplyBox
                   parentType="comment"
@@ -396,10 +409,12 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
                />
             )}
 
+            {/* Replies to this comment */}
             {(comment.replies.length > 0 && isExpanded) && (
                <div style={{
                   display: "flex",
                }}>
+                  {/* Line to create branching */}
                   <div style={{
                      marginLeft: "1rem",
                      borderLeft: !isLast ? "rgb(49, 53, 58) 2px solid" : "none",
@@ -434,8 +449,8 @@ const Comment: React.FC<CommentProps> = ({ comment, users, isLast, onAddReaction
 };
 
 interface PostProps {
-   post: PostWithCommentsDto;
-   users: UserDto[];
+   post: Post;
+   users: User[];
    onAddReaction: (parentId: string, type: string, parentType: ParentType) => void;
    onDeleteReaction: (parentId: string, reactionId: string, type: string, parentType: ParentType) => void;
    onDeleteComment: (commentId: string) => void;
@@ -494,12 +509,11 @@ const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReactio
                marginTop: "2rem"
             }}
          >
+            {/* Control panel at the top right corner */}
             <div style={{
                display: "flex",
-               justifyContent: "space-between",
+               justifyContent: "flex-end",
             }}>
-               <h4>{post.title}</h4>
-
                <EaseOutWrapper
                   show={isHovered}
                   direction="bottom"
@@ -524,10 +538,12 @@ const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReactio
                         paddingInline: "0.1rem",
                      }}
                   >
+                     {/* Add reaction button */}
                      {availableReactions.length > 0 && (
                         <ReactionToggleButton onClick={() => setShowNewReactionList(!showNewReactionList)} />
                      )}
 
+                     {/* Available reactions list */}
                      {showNewReactionList && (
                         <div
                            style={{
@@ -542,6 +558,7 @@ const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReactio
                         </div>
                      )}
 
+                     {/* Reply and cancel reply buttons */}
                      {isReplying ? (
                         <FontAwesomeIcon
                            icon={faCircleXmark}
@@ -565,7 +582,32 @@ const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReactio
                </EaseOutWrapper>
             </div>
 
-            <p>{post.content}</p>
+            {/* Post content */}
+            {post.sections.map((section, index) => {
+               return (
+                  <div
+                     key={index}
+                     style={{
+                        paddingTop: "4px",
+                        paddingBottom: "4px",
+                     }}
+                  >
+                     {section.type === "text" ? (
+                        <p style={section.style}>
+                           {section.content}
+                        </p>
+                     ) : (
+                        <img
+                           src={section.content}
+                           alt={`post-section-${index}`}
+                           style={section.style}
+                        />
+                     )}
+                  </div>
+               );
+            })}
+
+            {/* Created time */}
             <p style={{
                fontSize: "0.8rem",
                color: "rgb(137, 143, 150)",
@@ -573,8 +615,9 @@ const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReactio
                {formatTime(post.createdAt)}
             </p>
 
+            {/* Reaction list */}
             <div style={{
-               marginLeft: "2rem"
+               marginLeft: post.comments.length > 0 ? "2rem" : "0",
             }}>
                <ReactionList
                   reactionCounts={post.reactionCounts}
@@ -585,6 +628,7 @@ const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReactio
             </div>
          </div>
 
+         {/* Button to open replies */}
          {post.comments.length > 0 && (
             <ExpandToggle
                isExpanded={isExpanded}
@@ -593,6 +637,7 @@ const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReactio
             />
          )}
 
+         {/* Field to write reply */}
          {isReplying && (
             <ReplyBox
                parentType="post"
@@ -603,6 +648,7 @@ const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReactio
             />
          )}
 
+         {/* Comments linked to post */}
          <div style={{
             marginLeft: "1rem"
          }}>
@@ -632,18 +678,17 @@ const Post: React.FC<PostProps> = ({ post, users, onAddReaction, onDeleteReactio
 };
 
 const Board: React.FC = () => {
-   const [boardData, setBoardData] = useState<BoardResponseDto | null>(null);
-   const [loading, setLoading] = useState(true);
+   const [boardData, setBoardData] = useState<Board | null>(null);
 
-   const [message, setMessage] = useState<{
-      text: string;
-      variant: string;
-      icon: IconDefinition;
-   } | null>(null);
+   const [skip, setSkip] = useState(0);
+   const [take, setTake] = useState(4);
+
+   const [isLoadingMore, setIsLoadingMore] = useState(false);
+   const [loading, setLoading] = useState(true);
 
    const API_URL = import.meta.env.VITE_API_URL;
 
-   const fetchBoard = async () => {
+   const fetchBoard = async (newSkip: number, newTake: number, append = false) => {
       const token = localStorage.getItem("token");
 
       try {
@@ -652,19 +697,73 @@ const Board: React.FC = () => {
             headers["Authorization"] = `Bearer ${token}`;
          }
 
-         const response = await axios.get(`${API_URL}/board`, { headers });
+         const response = await axios.get<BoardDto>(
+            `${API_URL}/board?skip=${newSkip}&take=${newTake}`,
+            { headers }
+         );
 
-         setBoardData(response.data);
+         const parsedPosts = parsePosts(response.data.posts);
+
+         if (append && boardData) {
+            const mergedPosts = [...boardData.posts, ...parsedPosts];
+
+            const mergedUsersMap = new Map<string, User>();
+            [...boardData.users, ...response.data.users].forEach(user => {
+               mergedUsersMap.set(user.id, user);
+            });
+
+            setBoardData({
+               posts: mergedPosts,
+               users: Array.from(mergedUsersMap.values()),
+               totalPosts: response.data.totalPosts,
+            });
+         } else {
+            setBoardData({
+               posts: parsedPosts,
+               users: response.data.users,
+               totalPosts: response.data.totalPosts,
+            });
+         }
       } catch (err) {
          console.error("Failed to fetch board:", err);
+
+         setMessage({
+            text: "Failed to fetch board.",
+            variant: "danger",
+            icon: faFaceSadTear,
+         });
       } finally {
          setLoading(false);
+         setIsLoadingMore(false);
       }
    };
 
    useEffect(() => {
-      fetchBoard();
+      fetchBoard(0, 4, false);
    }, []);
+
+   const loadMore = () => {
+      if (!boardData) return;
+
+      const remaining = boardData.totalPosts - boardData.posts.length;
+      if (remaining <= 0) return;
+
+      setIsLoadingMore(true);
+
+      const newSkip = skip + take;
+      const newTake = Math.min(3, remaining);
+
+      fetchBoard(newSkip, newTake, true);
+
+      setSkip(newSkip);
+      setTake(newTake);
+   };
+
+   const [message, setMessage] = useState<{
+      text: string;
+      variant: string;
+      icon: IconDefinition;
+   } | null>(null);
 
    const handleDeleteComment = async (commentId: string) => {
       const token = localStorage.getItem("token");
@@ -688,7 +787,7 @@ const Board: React.FC = () => {
          setBoardData(prev => {
             if (!prev) return prev;
 
-            const markDeleted = (comments: CommentDto[]): CommentDto[] => {
+            const markDeleted = (comments: Comment[]): Comment[] => {
                return comments.map(c => {
                   if (c.id === commentId) {
                      return { ...c, isDeleted: true };
@@ -746,12 +845,12 @@ const Board: React.FC = () => {
             },
          });
 
-         const newComment: CommentDto = response.data;
+         const newComment: Comment = response.data;
 
          setBoardData(prev => {
             if (!prev) return prev;
 
-            const addReply = (comments: CommentDto[]): CommentDto[] => {
+            const addReply = (comments: Comment[]): Comment[] => {
                return comments.map(c => {
                   if (c.id === parentId && parentType === "comment") {
                      return { ...c, replies: [newComment, ...c.replies] };
@@ -895,12 +994,12 @@ const Board: React.FC = () => {
             headers: { Authorization: `Bearer ${token}` },
          });
 
-         const updatedComment: CommentDto = response.data;
+         const updatedComment: Comment = response.data;
 
          setBoardData(prev => {
             if (!prev) return prev;
 
-            const updateComment = (comments: CommentDto[]): CommentDto[] => {
+            const updateComment = (comments: Comment[]): Comment[] => {
                return comments.map(c => {
                   if (c.id === commentId) {
                      return { ...c, text: updatedComment.text, edited: updatedComment.edited };
@@ -935,31 +1034,104 @@ const Board: React.FC = () => {
       }
    };
 
-   if (!boardData) return <p>No board data</p>;
-
    return (
       <div style={{
          color: "white",
-         width: "640px",
-         paddingBottom: "4rem"
+         width: "640px"
       }}>
-         <h3>Feed</h3>
-         {boardData.posts
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .map((post: PostWithCommentsDto) => (
-               <Post
-                  key={post.id}
-                  post={post}
-                  users={boardData.users}
-                  onAddReaction={handleAddReaction}
-                  onDeleteReaction={handleDeleteReaction}
-                  onDeleteComment={handleDeleteComment}
-                  onAddReply={handleAddReply}
-                  onEditComment={handleEditComment}
-                  setMessage={setMessage}
+         {loading ? (
+            <div style={{
+               display: "flex",
+               justifyContent: "center",
+               marginTop: "2rem"
+            }}>
+               <Spinner
+                  style={{
+                     width: "21px",
+                     height: "21px",
+                     borderWidth: "3px",
+                     color: "rgb(137, 143, 150)"
+                  }}
                />
-            ))}
+            </div>
+         ) : boardData ? (
+            <>
+               {/* Posts section */}
+               {boardData.posts
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .map((post: Post) => (
+                     <Post
+                        key={post.id}
+                        post={post}
+                        users={boardData.users}
+                        onAddReaction={handleAddReaction}
+                        onDeleteReaction={handleDeleteReaction}
+                        onDeleteComment={handleDeleteComment}
+                        onAddReply={handleAddReply}
+                        onEditComment={handleEditComment}
+                        setMessage={setMessage}
+                     />
+                  ))}
 
+               {/* Load more section */}
+               <div
+                  style={{
+                     display: "flex",
+                     justifyContent: "center",
+                     marginTop: "1.5rem",
+                     marginBottom: "2rem",
+                  }}
+               >
+                  {boardData.posts.length < boardData.totalPosts ? (
+                     <Button
+                        style={{ display: "flex", alignItems: "center" }}
+                        variant="dark"
+                        onClick={loadMore}
+                        disabled={isLoadingMore}
+                     >
+                        {isLoadingMore ? (
+                           <Spinner
+                              style={{
+                                 width: "21px",
+                                 height: "21px",
+                                 borderWidth: "3px",
+                              }}
+                           />
+                        ) : (
+                           <>
+                              <FontAwesomeIcon
+                                 icon={faDownload}
+                                 style={{ marginRight: "4px" }}
+                              />
+                              Load more
+                           </>
+                        )}
+                     </Button>
+                  ) : (
+                     <p
+                        style={{
+                           color: "rgb(137, 143, 150)",
+                           fontSize: "0.9rem",
+                        }}
+                     >
+                        <FontAwesomeIcon icon={faFaceSadTear} /> No more posts
+                     </p>
+                  )}
+               </div>
+            </>
+         ) : (
+            <p
+               style={{
+                  color: "rgb(137, 143, 150)",
+                  fontSize: "0.9rem",
+                  textAlign: "center",
+               }}
+            >
+               <FontAwesomeIcon icon={faFaceSadTear} /> No board data
+            </p>
+         )}
+
+         {/* Message in bottom left corner */}
          <FixedMessage
             message={message}
             onClose={() => setMessage(null)}

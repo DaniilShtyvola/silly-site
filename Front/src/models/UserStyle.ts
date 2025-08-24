@@ -7,13 +7,6 @@ export type UserStyle = {
     avatarIcon: IconDefinition;
 };
 
-export type UserCommentDto = {
-    id: string;
-    text: string;
-    createdAt: string;
-    reactions: Record<string, number>;
-};
-
 export type UserStyleDto = {
     avatarIcon: string;
     avatarColor: string;
@@ -25,8 +18,5 @@ export type UserInfoDto = {
     userName: string;
     registeredAt: string;
     commentsCount: number;
-    lastComments: UserCommentDto[];
-    receivedReactionsCountByType: Record<string, number>;
-    userReactionsCountByType: Record<string, number>;
     style: UserStyleDto;
 };
