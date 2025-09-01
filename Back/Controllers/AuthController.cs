@@ -74,6 +74,7 @@ namespace Controllers
 
             var user = new User
             {
+                Id = ShortUlid.NewId(),
                 UserName = request.UserName,
                 PasswordHash = passwordHash,
                 IsAdmin = false,
@@ -136,7 +137,7 @@ namespace Controllers
         {
             var claims = new List<Claim>
             {
-                new Claim("userId", user.Id.ToString()),
+                new Claim("userId", user.Id),
                 new Claim("userName", user.UserName),
                 new Claim("isAdmin", user.IsAdmin.ToString().ToLower())
             };

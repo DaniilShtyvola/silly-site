@@ -11,8 +11,7 @@ export const parsePosts = (postsDto: PostDto[]): Post[] => {
             sections,
             createdAt: post.createdAt,
             isPinned: post.isPinned,
-            reactionCounts: post.reactionCounts,
-            myReactions: post.myReactions,
+            reactions: post.reactions,
             comments: post.comments,
         };
     });

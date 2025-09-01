@@ -1,23 +1,30 @@
 import { UserStyleDto } from "./UserStyle";
 
+export type ParentType = "post" | "comment";
+
 export type User = {
     id: string;
     userName: string;
     style: UserStyleDto;
 };
 
+export type Reaction = {
+    type: string;
+    count: number;
+    isMine: boolean;
+};
+
 export type Comment = {
     id: string;
-    userId: string;
+    userId: string | null;
     text: string | null;
     createdAt: string;
 
-    edited: string | null;
-    isMine: boolean;
+    isEdited: boolean;
     isDeleted: boolean;
+    isMine: boolean;
 
-    reactionCounts: Record<string, number> | {};
-    myReactions: Record<string, string> | {};
+    reactions: Reaction[];
     replies: Comment[];
 };
 
@@ -26,8 +33,7 @@ export type PostDto = {
     contentJson: string;
     createdAt: string;
     isPinned: boolean;
-    reactionCounts: Record<string, number> | {};
-    myReactions: Record<string, string> | {};
+    reactions: Reaction[];
     comments: Comment[];
 };
 
@@ -44,8 +50,7 @@ export type Post = {
     sections: PostSection[];
     createdAt: string;
     isPinned: boolean;
-    reactionCounts: Record<string, number> | {};
-    myReactions: Record<string, string> | {};
+    reactions: Reaction[];
     comments: Comment[];
 };
 

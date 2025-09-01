@@ -51,6 +51,7 @@ namespace Back.Controllers
                         {
                             session = new SessionInfo
                             {
+                                Id = ShortUlid.NewId(),
                                 UserAgent = request.ClientInfo.UserAgent,
                                 Language = request.ClientInfo.Language,
                                 Platform = request.ClientInfo.Platform,
@@ -62,7 +63,7 @@ namespace Back.Controllers
                             _context.SessionInfos.Add(session);
                             await _context.SaveChangesAsync();
                         }
-                        else if (!session.UserId.HasValue)
+                        else if (session.UserId != null)
                         {
                             session.UserId = user.Id;
                             _context.SessionInfos.Update(session);
@@ -80,6 +81,7 @@ namespace Back.Controllers
                 {
                     session = new SessionInfo
                     {
+                        Id = ShortUlid.NewId(),
                         UserAgent = request.ClientInfo.UserAgent,
                         Language = request.ClientInfo.Language,
                         Platform = request.ClientInfo.Platform,
@@ -93,6 +95,7 @@ namespace Back.Controllers
 
             var log = new Log
             {
+                Id = ShortUlid.NewId(),
                 SessionInfoId = session.Id,
                 Message = request.Message,
                 LogType = request.LogType,

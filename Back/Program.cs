@@ -81,6 +81,7 @@ using (var scope = app.Services.CreateScope())
     {
         var admin = new User
         {
+            Id = ShortUlid.NewId(),
             UserName = "Danya",
             PasswordHash = HashPassword("1234"),
             IsAdmin = true,

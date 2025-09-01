@@ -3,23 +3,17 @@
 public class Comment
 {
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Id { get; set; } = ShortUlid.NewId();
 
     public string? Text { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? Edited { get; set; }
-    public bool IsDeleted { get; set; }
+    public bool IsEdited { get; set; } = false;
+    public bool IsDeleted { get; set; } = false;
 
     [Required]
-    public Guid UserId { get; set; }
+    public string UserId { get; set; }
     public User User { get; set; }
 
     [Required]
-    public Guid PostId { get; set; }
-    public Post Post { get; set; }
-
-    public Guid? ParentCommentId { get; set; }
-    public Comment? ParentComment { get; set; }
-
-    public ICollection<Comment> Replies { get; set; } = new List<Comment>();
+    public string ParentId { get; set; }
 }

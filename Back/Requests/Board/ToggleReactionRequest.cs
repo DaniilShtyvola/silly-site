@@ -1,6 +1,6 @@
-﻿public class CreateCommentRequest
+﻿public class ToggleReactionRequest
 {
-    public string Text { get; set; }
+    public string Type { get; set; }
     public string ParentType { get; set; }
     public string ParentId { get; set; }
 }

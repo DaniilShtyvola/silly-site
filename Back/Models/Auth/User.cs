@@ -3,7 +3,7 @@
 public class User
 {
     [Key]
-    public Guid Id { get; set; }
+    public required string Id { get; set; }
 
     [MaxLength(25)]
     public required string UserName { get; set; }

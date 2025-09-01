@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Security.Claims;
 
 [ApiController]
@@ -30,25 +31,21 @@ public class BoardController : ControllerBase
         var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
         if (user == null) return Unauthorized();
 
-        Guid postId;
-
-        if (request.ParentCommentId.HasValue)
+        if (request.ParentType == "post")
         {
-            var parentComment = await _context.Comments
-                .FirstOrDefaultAsync(c => c.Id == request.ParentCommentId.Value);
-
+            var post = await _context.Posts.FindAsync(request.ParentId);
+            if (post == null)
+                return NotFound("Post not found");
+        }
+        else if (request.ParentType == "comment")
+        {
+            var parentComment = await _context.Comments.FindAsync(request.ParentId);
             if (parentComment == null)
                 return NotFound("Parent comment not found");
-
-            postId = parentComment.PostId;
         }
         else
         {
-            var post = await _context.Posts.FindAsync(request.PostId);
-            if (post == null)
-                return NotFound("Post not found");
-
-            postId = post.Id;
+            return BadRequest("ParentType must be either 'post' or 'comment'.");
         }
 
         var comment = new Comment
@@ -56,8 +53,7 @@ public class BoardController : ControllerBase
             Text = request.Text,
             CreatedAt = DateTime.UtcNow,
             UserId = user.Id,
-            PostId = postId,
-            ParentCommentId = request.ParentCommentId
+            ParentId = request.ParentId
         };
 
         _context.Comments.Add(comment);
@@ -69,12 +65,9 @@ public class BoardController : ControllerBase
             UserId = comment.UserId,
             Text = comment.Text,
             CreatedAt = comment.CreatedAt,
-            Edited = comment.Edited,
+            IsEdited = false,
             IsMine = true,
             IsDeleted = false,
-            ReactionCounts = new Dictionary<string, int>(),
-            MyReactions = new Dictionary<string, string>(),
-            Replies = new List<CommentDto>()
         };
 
         return Ok(dto);
@@ -82,7 +75,7 @@ public class BoardController : ControllerBase
 
     [Authorize]
     [HttpDelete("comments/{id}")]
-    public async Task<IActionResult> DeleteComment(Guid id)
+    public async Task<IActionResult> DeleteComment(string id)
     {
         var userName = GetUserName();
         if (userName == null) return Unauthorized();
@@ -91,7 +84,6 @@ public class BoardController : ControllerBase
         if (user == null) return Unauthorized();
 
         var comment = await _context.Comments
-            .Include(c => c.Replies)
             .FirstOrDefaultAsync(c => c.Id == id && c.UserId == user.Id);
 
         if (comment == null)
@@ -106,7 +98,7 @@ public class BoardController : ControllerBase
 
     [Authorize]
     [HttpPut("comments/{id}")]
-    public async Task<IActionResult> EditComment(Guid id, [FromBody] EditCommentRequest request)
+    public async Task<IActionResult> EditComment(string id, [FromBody] EditCommentRequest request)
     {
         var userName = GetUserName();
         if (userName == null) return Unauthorized();
@@ -122,12 +114,12 @@ public class BoardController : ControllerBase
             return BadRequest("Text cannot be empty");
 
         comment.Text = request.Text;
-        comment.Edited = DateTime.UtcNow;
+        comment.IsEdited = true;
 
         _context.Comments.Update(comment);
         await _context.SaveChangesAsync();
 
-        return Ok(comment);
+        return Ok(new { success = true });
     }
 
     //[Authorize]
@@ -139,7 +131,7 @@ public class BoardController : ControllerBase
 
         var post = new Post
         {
-            Id = Guid.NewGuid(),
+            Id = ShortUlid.NewId(),
             ContentJson = request.ContentJson,
             IsPinned = request.IsPinned,
             CreatedAt = DateTime.UtcNow
@@ -153,7 +145,7 @@ public class BoardController : ControllerBase
 
     [Authorize]
     [HttpDelete("posts/{id}")]
-    public async Task<IActionResult> DeletePost(Guid id)
+    public async Task<IActionResult> DeletePost(string id)
     {
         if (!IsAdmin())
             return Forbid();
@@ -170,7 +162,7 @@ public class BoardController : ControllerBase
 
     [Authorize]
     [HttpPost("reactions")]
-    public async Task<IActionResult> AddReaction([FromBody] CreateReactionRequest request)
+    public async Task<IActionResult> ToggleReaction([FromBody] ToggleReactionRequest request)
     {
         var userName = GetUserName();
         if (userName == null) return Unauthorized();
@@ -178,54 +170,64 @@ public class BoardController : ControllerBase
         var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
         if (user == null) return Unauthorized();
 
-        if ((request.PostId == null && request.CommentId == null) || (request.PostId != null && request.CommentId != null))
+        bool parentExists = false;
+
+        if (request.ParentType.Equals("post", StringComparison.OrdinalIgnoreCase))
         {
-            return BadRequest("Specify exactly one of PostId or CommentId.");
+            parentExists = await _context.Posts.AnyAsync(p => p.Id == request.ParentId);
+        }
+        else if (request.ParentType.Equals("comment", StringComparison.OrdinalIgnoreCase))
+        {
+            parentExists = await _context.Comments.AnyAsync(c => c.Id == request.ParentId);
+        }
+        else
+        {
+            return BadRequest("ParentType must be either 'post' or 'comment'.");
         }
 
-        if (request.PostId != null)
+        if (!parentExists)
         {
-            var postExists = await _context.Posts.AnyAsync(p => p.Id == request.PostId);
-            if (!postExists) return NotFound("Post not found.");
+            return NotFound($"{request.ParentType} not found.");
         }
 
-        if (request.CommentId != null)
-        {
-            var commentExists = await _context.Comments.AnyAsync(c => c.Id == request.CommentId);
-            if (!commentExists) return NotFound("Comment not found.");
-        }
-
-        var reaction = new Reaction
-        {
-            UserId = user.Id,
-            Type = request.Type,
-            PostId = request.PostId,
-            CommentId = request.CommentId
-        };
-
-        _context.Reactions.Add(reaction);
-        await _context.SaveChangesAsync();
-
-        return Ok(new { success = true, id = reaction.Id });
-    }
-
-    [Authorize]
-    [HttpDelete("reactions/{id}")]
-    public async Task<IActionResult> DeleteReaction(Guid id)
-    {
-        var userName = GetUserName();
-        if (userName == null) return Unauthorized();
-
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
-        if (user == null) return Unauthorized();
-
-        var reaction = await _context.Reactions.FirstOrDefaultAsync(r =>
-            r.Id == id && r.UserId == user.Id);
+        var reaction = await _context.Reactions
+            .FirstOrDefaultAsync(r => r.Type == request.Type && r.ParentId == request.ParentId);
 
         if (reaction == null)
-            return NotFound("Reaction not found or not owned by user");
+        {
+            reaction = new Reaction
+            {
+                Type = request.Type,
+                ParentId = request.ParentId,
+                UserIds = user.Id
+            };
 
-        _context.Reactions.Remove(reaction);
+            _context.Reactions.Add(reaction);
+        }
+        else
+        {
+            var userIds = reaction.UserIds.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            if (!userIds.Contains(user.Id))
+            {
+                userIds.Add(user.Id);
+            }
+            else
+            {
+                userIds.Remove(user.Id);
+            }
+
+            if (userIds.Count == 0)
+            {
+                _context.Reactions.Remove(reaction);
+            }
+            else
+            {
+                reaction.UserIds = string.Join(',', userIds);
+                _context.Reactions.Update(reaction);
+            }
+        }
+
         await _context.SaveChangesAsync();
 
         return Ok(new { success = true });
@@ -235,110 +237,108 @@ public class BoardController : ControllerBase
     public async Task<IActionResult> GetBoard([FromQuery] int skip = 0, [FromQuery] int take = 4)
     {
         var userName = GetUserName();
-        Guid? currentUserId = null;
-        bool isAdmin = IsAdmin();
-        User? currentUser = null;
+        var isAdmin = IsAdmin();
+        var currentUser = await GetCurrentUserAsync(userName);
 
-        if (userName != null)
-        {
-            currentUser = await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
-            if (currentUser == null) return Unauthorized();
-            currentUserId = currentUser.Id;
-        }
+        if (userName != null && currentUser == null)
+            return Unauthorized();
 
         var totalPosts = await _context.Posts.CountAsync();
+        var posts = await GetPostsAsync(skip, take);
 
-        var posts = await _context.Posts
+        if (!posts.Any())
+            return Ok(new BoardResponse { Posts = new(), Users = new(), TotalPosts = totalPosts });
+
+        var postIds = posts.Select(p => p.Id).ToList();
+        var allComments = await GetAllCommentsForPostsAsync(postIds);
+        var reactions = await GetReactionsAsync(postIds, allComments.Select(c => c.Id).ToList());
+
+        var usersById = new Dictionary<string, UserDto>();
+        var commentDtos = BuildCommentDtos(allComments, reactions, currentUser?.Id, isAdmin, usersById);
+        var commentTree = BuildCommentTree(commentDtos, allComments, postIds);
+        var postsWithComments = BuildPostDtos(posts, reactions, commentTree, currentUser?.Id);
+
+        AddCurrentUserToUsersList(currentUser, usersById);
+
+        return Ok(new BoardResponse
+        {
+            Posts = postsWithComments,
+            Users = usersById.Values.ToList(),
+            TotalPosts = totalPosts
+        });
+    }
+
+    private async Task<User?> GetCurrentUserAsync(string? userName)
+    {
+        if (userName == null) return null;
+
+        return await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
+    }
+
+    private async Task<List<Post>> GetPostsAsync(int skip, int take)
+    {
+        return await _context.Posts
             .OrderByDescending(p => p.IsPinned)
             .ThenByDescending(p => p.CreatedAt)
             .Skip(skip)
             .Take(take)
             .ToListAsync();
+    }
 
-        if (!posts.Any())
-        {
-            return Ok(new BoardResponse
-            {
-                Posts = new List<PostWithCommentsDto>(),
-                Users = new List<UserDto>(),
-                TotalPosts = totalPosts
-            });
-        }
-
-        var postIds = posts.Select(p => p.Id).ToList();
-
+    private async Task<List<Comment>> GetAllCommentsForPostsAsync(List<string> postIds)
+    {
         var comments = await _context.Comments
             .Include(c => c.User)
-            .Include(c => c.Replies)
-            .Where(c => postIds.Contains(c.PostId))
+            .Where(c => postIds.Contains(c.ParentId))
             .ToListAsync();
 
-        var reactions = await _context.Reactions
-            .Where(r => (r.PostId.HasValue && postIds.Contains(r.PostId.Value)) ||
-                        (r.CommentId.HasValue && comments.Select(c => c.Id).Contains(r.CommentId.Value)))
-            .ToListAsync();
+        var allComments = new List<Comment>(comments);
+        var parentIdsToCheck = comments.Select(c => c.Id).ToList();
 
-        var reactionsByPostId = reactions
-            .Where(r => r.PostId.HasValue)
-            .ToLookup(r => r.PostId.Value);
-
-        var reactionsByCommentId = reactions
-            .Where(r => r.CommentId.HasValue)
-            .ToLookup(r => r.CommentId.Value);
-
-        var usersById = new Dictionary<Guid, UserDto>();
-
-        var commentDtos = comments.Select(c =>
+        while (parentIdsToCheck.Any())
         {
-            bool isMine = currentUserId.HasValue && c.UserId == currentUserId.Value;
-            bool canSeeFull = isAdmin || isMine;
+            var replies = await _context.Comments
+                .Include(c => c.User)
+                .Where(c => parentIdsToCheck.Contains(c.ParentId))
+                .ToListAsync();
 
-            var commentReactions = reactionsByCommentId[c.Id];
-            var reactionCounts = commentReactions
-                .GroupBy(r => r.Type)
-                .ToDictionary(g => g.Key, g => g.Count());
+            if (!replies.Any()) break;
 
-            var myReactions = currentUserId.HasValue
-                ? commentReactions
-                    .Where(r => r.UserId == currentUserId.Value)
-                    .ToDictionary(r => r.Type, r => r.Id.ToString())
-                : new Dictionary<string, string>();
+            allComments.AddRange(replies);
+            parentIdsToCheck = replies.Select(c => c.Id).ToList();
+        }
 
-            Guid? userIdToShow = c.UserId;
-            string? textToShow = c.Text;
+        return allComments;
+    }
 
-            if (c.IsDeleted)
-            {
-                if (!c.Replies.Any())
-                {
-                    if (!canSeeFull) return null;
-                }
-                else
-                {
-                    if (!canSeeFull)
-                    {
-                        userIdToShow = null;
-                        textToShow = "[deleted]";
-                    }
-                }
-            }
+    private async Task<List<Reaction>> GetReactionsAsync(List<string> postIds, List<string> commentIds)
+    {
+        return await _context.Reactions
+            .Where(r => postIds.Contains(r.ParentId) || commentIds.Contains(r.ParentId))
+            .ToListAsync();
+    }
 
-            if (userIdToShow.HasValue && !usersById.ContainsKey(userIdToShow.Value))
-            {
-                var u = c.User;
-                usersById[userIdToShow.Value] = new UserDto
-                {
-                    Id = u.Id,
-                    UserName = u.UserName,
-                    Style = new UserStyleDto
-                    {
-                        AvatarIcon = u.AvatarIcon ?? "user",
-                        AvatarColor = u.AvatarColor ?? "898F96",
-                        AvatarDirection = u.AvatarDirection ?? "to right",
-                        UserNameColor = u.UserNameColor ?? "898F96"
-                    }
-                };
-            }
+    private List<CommentDto> BuildCommentDtos(
+        List<Comment> allComments,
+        List<Reaction> reactions,
+        string? currentUserId,
+        bool isAdmin,
+        Dictionary<string, UserDto> usersById)
+    {
+        var reactionsByParentId = reactions.ToLookup(r => r.ParentId);
+
+        return allComments.Select(c =>
+        {
+            var isMine = currentUserId != null && c.UserId == currentUserId;
+            var canSeeFull = isAdmin || isMine;
+
+            var reactionDtos = BuildReactionDtos(reactionsByParentId[c.Id], currentUserId);
+            var (userIdToShow, textToShow) = GetCommentDisplayData(c, allComments, canSeeFull);
+
+            if (c.IsDeleted && !allComments.Any(x => x.ParentId == c.Id) && !canSeeFull)
+                return null;
+
+            AddUserToUsersDict(c.User, userIdToShow, usersById);
 
             return new CommentDto
             {
@@ -346,48 +346,88 @@ public class BoardController : ControllerBase
                 UserId = userIdToShow,
                 Text = textToShow,
                 CreatedAt = c.CreatedAt,
-                Edited = c.Edited,
+                IsEdited = c.IsEdited,
                 IsDeleted = c.IsDeleted,
                 IsMine = isMine,
-                ReactionCounts = reactionCounts,
-                MyReactions = myReactions,
+                Reactions = reactionDtos,
                 Replies = new List<CommentDto>()
             };
         })
         .Where(c => c != null)
         .ToList()!;
+    }
 
+    private List<ReactionDto> BuildReactionDtos(IEnumerable<Reaction> reactions, string? currentUserId)
+    {
+        return reactions.Select(r =>
+        {
+            var userIds = r.UserIds.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            return new ReactionDto
+            {
+                Type = r.Type,
+                Count = userIds.Length,
+                IsMine = currentUserId != null && userIds.Contains(currentUserId)
+            };
+        }).ToList();
+    }
+
+    private (string? userId, string? text) GetCommentDisplayData(Comment comment, List<Comment> allComments, bool canSeeFull)
+    {
+        if (comment.IsDeleted && allComments.Any(x => x.ParentId == comment.Id) && !canSeeFull)
+            return (null, "[deleted]");
+
+        return (comment.UserId, comment.Text);
+    }
+
+    private void AddUserToUsersDict(User user, string? userId, Dictionary<string, UserDto> usersById)
+    {
+        if (userId != null && !usersById.ContainsKey(userId))
+        {
+            usersById[userId] = new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Style = new UserStyleDto
+                {
+                    AvatarIcon = user.AvatarIcon ?? "user",
+                    AvatarColor = user.AvatarColor ?? "898F96",
+                    AvatarDirection = user.AvatarDirection ?? "to right",
+                    UserNameColor = user.UserNameColor ?? "898F96"
+                }
+            };
+        }
+    }
+
+    private Dictionary<string, List<CommentDto>> BuildCommentTree(
+        List<CommentDto> commentDtos,
+        List<Comment> allComments,
+        List<string> postIds)
+    {
         var commentDict = commentDtos.ToDictionary(c => c.Id);
 
-        foreach (var c in comments.OrderByDescending(x => x.CreatedAt))
+        foreach (var c in allComments.OrderByDescending(x => x.CreatedAt))
         {
-            if (c.ParentCommentId.HasValue && commentDict.ContainsKey(c.Id) && commentDict.ContainsKey(c.ParentCommentId.Value))
-            {
-                commentDict[c.ParentCommentId.Value].Replies.Add(commentDict[c.Id]);
-                commentDict[c.ParentCommentId.Value].Replies = commentDict[c.ParentCommentId.Value]
-                    .Replies
-                    .OrderByDescending(r => r.CreatedAt)
-                    .ToList();
-            }
+            if (commentDict.ContainsKey(c.Id) && commentDict.ContainsKey(c.ParentId))
+                commentDict[c.ParentId].Replies.Add(commentDict[c.Id]);
         }
 
-        var commentsByPostId = commentDtos
-            .Where(c => !comments.First(x => x.Id == c.Id).ParentCommentId.HasValue)
-            .GroupBy(c => comments.First(x => x.Id == c.Id).PostId);
+        return commentDtos
+            .Where(c => postIds.Contains(allComments.First(x => x.Id == c.Id).ParentId))
+            .GroupBy(c => allComments.First(x => x.Id == c.Id).ParentId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(c => c.CreatedAt).ToList());
+    }
 
-        var postsWithComments = posts.Select(post =>
+    private List<PostWithCommentsDto> BuildPostDtos(
+        List<Post> posts,
+        List<Reaction> reactions,
+        Dictionary<string, List<CommentDto>> commentTree,
+        string? currentUserId)
+    {
+        var reactionsByParentId = reactions.ToLookup(r => r.ParentId);
+
+        return posts.Select(post =>
         {
-            var postReactions = reactionsByPostId[post.Id];
-
-            var reactionCounts = postReactions
-                .GroupBy(r => r.Type)
-                .ToDictionary(g => g.Key, g => g.Count());
-
-            var myReactions = currentUserId.HasValue
-                ? postReactions
-                    .Where(r => r.UserId == currentUserId.Value)
-                    .ToDictionary(r => r.Type, r => r.Id.ToString())
-                : new Dictionary<string, string>();
+            var reactionDtos = BuildReactionDtos(reactionsByParentId[post.Id], currentUserId);
 
             return new PostWithCommentsDto
             {
@@ -395,15 +435,14 @@ public class BoardController : ControllerBase
                 ContentJson = post.ContentJson,
                 CreatedAt = post.CreatedAt,
                 IsPinned = post.IsPinned,
-                ReactionCounts = reactionCounts,
-                MyReactions = myReactions,
-                Comments = commentsByPostId
-                    .FirstOrDefault(g => g.Key == post.Id)?
-                    .OrderByDescending(c => c.CreatedAt)
-                    .ToList() ?? new List<CommentDto>()
+                Reactions = reactionDtos,
+                Comments = commentTree.ContainsKey(post.Id) ? commentTree[post.Id] : new List<CommentDto>()
             };
         }).ToList();
+    }
 
+    private void AddCurrentUserToUsersList(User? currentUser, Dictionary<string, UserDto> usersById)
+    {
         if (currentUser != null && !usersById.ContainsKey(currentUser.Id))
         {
             usersById[currentUser.Id] = new UserDto
@@ -419,14 +458,5 @@ public class BoardController : ControllerBase
                 }
             };
         }
-
-        var response = new BoardResponse
-        {
-            Posts = postsWithComments,
-            Users = usersById.Values.ToList(),
-            TotalPosts = totalPosts
-        };
-
-        return Ok(response);
     }
 }
