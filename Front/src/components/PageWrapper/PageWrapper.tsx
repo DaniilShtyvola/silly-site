@@ -9,7 +9,8 @@ const PageWrapper: React.FC<PageWrapperProps> = ({ children }) => {
       display: "flex",
       justifyContent: "center",
       minHeight: "100%",
-      backgroundColor: "rgb(23, 25, 27)"
+      backgroundColor: "rgb(23, 25, 27)",
+      overflow: "hidden"
     }}>
       <div style={{
         width: "1120px",

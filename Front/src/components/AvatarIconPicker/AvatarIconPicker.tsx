@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
-import { AvatarIcons } from "../../utils/AvatarIcons";
+import { AvatarIcons } from "../../utils/Icons";
 
 type AvatarIconPickerProps = {
     selectedIcon: IconDefinition;

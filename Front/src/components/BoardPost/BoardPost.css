@@ -1,0 +1,27 @@
+.link {
+    color: rgb(77, 142, 220);
+    text-decoration: none;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+.tooltip {
+    position: fixed !important;
+}
+
+.tooltip-inner {
+    background-color: rgb(23, 25, 27);
+    color: rgb(186, 191, 196);
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden; 
+    max-width: none;
+}
+
+
+.tooltip-arrow {
+    --bs-tooltip-bg: rgb(23, 25, 27);
+}

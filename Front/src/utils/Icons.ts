@@ -1,4 +1,11 @@
-import {
+import { 
+    faFaceAngry,
+    faFaceFrown,
+    faFaceLaugh,
+    faFaceSadTear,
+    faFaceSurprise,
+    faSkull,
+    faClockRotateLeft,
     faUser,
     faStar,
     faCat,
@@ -12,7 +19,6 @@ import {
     faHatCowboy,
     faHorseHead,
     faJetFighter,
-    faSkull,
     faPizzaSlice,
     faFire,
     faLemon,
@@ -29,8 +35,26 @@ import {
     faGamepad,
     faGauge,
     faBatteryFull,
-    faXmark
+    faXmark,
+    faLink,
+    faBullhorn,
 } from "@fortawesome/free-solid-svg-icons";
+
+export const ReactionIcons = {
+    laugh: faFaceLaugh,
+    skull: faSkull,
+    angry: faFaceAngry,
+    cry: faFaceSadTear,
+    wow: faFaceSurprise,
+    frown: faFaceFrown,
+};
+
+
+export const CategoryIcons = {
+    update: faClockRotateLeft,
+    shares: faLink,
+    message: faBullhorn,
+};
 
 export const AvatarIcons = {
     user: faUser,

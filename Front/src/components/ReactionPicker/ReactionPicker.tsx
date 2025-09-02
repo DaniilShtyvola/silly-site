@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-import { ReactionIcons } from "../../utils/ReactionIcons";
+import { ReactionIcons } from "../../utils/Icons";
 
 interface ReactionPickerProps {
    availableReactions: string[];

@@ -133,6 +133,7 @@ public class BoardController : ControllerBase
         {
             Id = ShortUlid.NewId(),
             ContentJson = request.ContentJson,
+            Category = request.Category,
             IsPinned = request.IsPinned,
             CreatedAt = DateTime.UtcNow
         };
@@ -234,7 +235,10 @@ public class BoardController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetBoard([FromQuery] int skip = 0, [FromQuery] int take = 4)
+    public async Task<IActionResult> GetBoard(
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 4,
+        [FromQuery] string? category = null)
     {
         var userName = GetUserName();
         var isAdmin = IsAdmin();
@@ -244,7 +248,7 @@ public class BoardController : ControllerBase
             return Unauthorized();
 
         var totalPosts = await _context.Posts.CountAsync();
-        var posts = await GetPostsAsync(skip, take);
+        var posts = await GetPostsAsync(skip, take, category);
 
         if (!posts.Any())
             return Ok(new BoardResponse { Posts = new(), Users = new(), TotalPosts = totalPosts });
@@ -275,9 +279,16 @@ public class BoardController : ControllerBase
         return await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
     }
 
-    private async Task<List<Post>> GetPostsAsync(int skip, int take)
+    private async Task<List<Post>> GetPostsAsync(int skip, int take, string? category = null)
     {
-        return await _context.Posts
+        var query = _context.Posts.AsQueryable();
+
+        if (!string.IsNullOrEmpty(category))
+        {
+            query = query.Where(p => p.Category == category);
+        }
+
+        return await query
             .OrderByDescending(p => p.IsPinned)
             .ThenByDescending(p => p.CreatedAt)
             .Skip(skip)
@@ -433,6 +444,7 @@ public class BoardController : ControllerBase
             {
                 Id = post.Id,
                 ContentJson = post.ContentJson,
+                Category = post.Category,
                 CreatedAt = post.CreatedAt,
                 IsPinned = post.IsPinned,
                 Reactions = reactionDtos,

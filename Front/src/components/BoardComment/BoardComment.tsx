@@ -26,8 +26,7 @@ import GradientUsername from "../GradientUsername/GradientUsername";
 import type { Comment, User, ParentType } from "../../models/BoardResponse";
 
 import { formatTime } from "../../utils/FormatTime";
-import { ReactionIcons } from "../../utils/ReactionIcons";
-import { AvatarIcons } from "../../utils/AvatarIcons";
+import { ReactionIcons, AvatarIcons } from "../../utils/Icons";
 import { UserStyle } from "../../models/UserStyle";
 import { parseStyle } from "../../utils/ParseStyle";
 

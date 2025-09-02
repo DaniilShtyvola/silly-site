@@ -1,6 +1,6 @@
 import { UserStyle, UserStyleDto } from "../models/UserStyle";
 
-import { AvatarIcons } from "./AvatarIcons";
+import { AvatarIcons } from "./Icons";
 
 const parseColors = (colorString: string): [string, string] => {
     const parts = colorString.split(",").map(c => c.trim());

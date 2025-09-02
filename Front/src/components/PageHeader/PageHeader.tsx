@@ -27,7 +27,7 @@ import useAuthAvatar from '../../hooks/UseAuth';
 import { UserStyle, UserStyleDto } from "../../models/UserStyle";
 
 import { parseStyle } from "../../utils/ParseStyle";
-import { AvatarIcons } from "../../utils/AvatarIcons";
+import { AvatarIcons } from "../../utils/Icons";
 
 interface CustomNavLinkProps {
     icon?: FontAwesomeIconProps['icon'];

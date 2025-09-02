@@ -30,7 +30,7 @@ import AvatarIconPicker from "../../components/AvatarIconPicker/AvatarIconPicker
 
 import { UserStyle, UserInfoDto } from "../../models/UserStyle";
 
-import { AvatarIcons } from "../../utils/AvatarIcons";
+import { AvatarIcons } from "../../utils/Icons";
 import { formatTime } from "../../utils/FormatTime";
 import {
     parseStyle,

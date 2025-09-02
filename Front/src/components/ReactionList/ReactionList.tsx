@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactionIcons } from "../../utils/ReactionIcons";
+import { ReactionIcons } from "../../utils/Icons.ts";
 import type { Reaction } from "../../models/BoardResponse.ts";
 
 interface ReactionListProps {

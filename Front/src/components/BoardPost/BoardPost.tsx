@@ -1,11 +1,16 @@
 import { useState } from "react";
 
+import "./BoardPost.css";
+
+import { OverlayTrigger, Tooltip } from "react-bootstrap";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
-   faComment,
-   faCircleXmark,
-   faFaceSadTear,
+    faComment,
+    faCircleXmark,
+    faFaceSadTear,
+    faBullhorn
 } from "@fortawesome/free-solid-svg-icons";
 
 import ExpandToggle from "../ExpandToggle/ExpandToggle";
@@ -19,7 +24,7 @@ import Comment from "../BoardComment/BoardComment";
 import type { User, Post, ParentType } from "../../models/BoardResponse";
 
 import { formatTime } from "../../utils/FormatTime";
-import { ReactionIcons } from "../../utils/ReactionIcons";
+import { ReactionIcons, CategoryIcons } from "../../utils/Icons";
 
 interface BoardPostProps {
     post: Post;
@@ -38,6 +43,11 @@ const BoardPost: React.FC<BoardPostProps> = ({ post, users, onToggleReaction, on
     const [isReplying, setIsReplying] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const [showNewReactionList, setShowNewReactionList] = useState(false);
+
+    const categoryIcon =
+        post.category in CategoryIcons
+            ? CategoryIcons[post.category as keyof typeof CategoryIcons]
+            : faBullhorn;
 
     const availableReactions = Object.keys(ReactionIcons).filter(type =>
         !post.reactions.some(r => r.type === type)
@@ -88,7 +98,7 @@ const BoardPost: React.FC<BoardPostProps> = ({ post, users, onToggleReaction, on
                         style={{
                             display: "flex",
                             position: "relative",
-                            height: "4px",
+                            height: "0",
                         }}
                     >
                         <div
@@ -152,36 +162,98 @@ const BoardPost: React.FC<BoardPostProps> = ({ post, users, onToggleReaction, on
 
                 {/* Post content */}
                 {post.sections.map((section, index) => {
-                    return (
-                        <div
-                            key={index}
-                            style={{
-                                paddingTop: "4px",
-                                paddingBottom: "4px",
-                            }}
-                        >
-                            {section.type === "text" ? (
+                    const isFirst = index === 0;
+                    const isLast = index === post.sections.length - 1;
+
+                    if (section.type === "text") {
+                        const parts = section.content.split(/(\[.*?\]\(.*?\))/g);
+
+                        return (
+                            <div
+                                key={index}
+                                style={{
+                                    paddingTop: isFirst ? 0 : "4px",
+                                    paddingBottom: isLast ? 0 : "4px",
+                                }}
+                            >
                                 <p style={section.style}>
-                                    {section.content}
+                                    {parts.map((part, i) => {
+                                        const match = part.match(/\[(.*?)\]\((.*?)\)/);
+                                        if (match) {
+                                            const [, text, href] = match;
+                                            return (
+                                                <OverlayTrigger
+                                                    key={i}
+                                                    placement="bottom-start"
+                                                    delay={{ show: 1000, hide: 0 }}
+                                                    overlay={
+                                                        <Tooltip id={`tooltip-${i}`}>
+                                                            {href.length > 30 ? href.slice(0, 30) + "..." : href}
+                                                        </Tooltip>
+                                                    }
+                                                >
+                                                    <a
+                                                        href={href}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="link"
+                                                    >
+                                                        {text}
+                                                    </a>
+                                                </OverlayTrigger>
+                                            );
+                                        }
+                                        return <span key={i}>{part}</span>;
+                                    })}
                                 </p>
-                            ) : (
+                            </div>
+                        );
+                    } else {
+                        return (
+                            <div
+                                key={index}
+                                style={{
+                                    paddingTop: isFirst ? 0 : "4px",
+                                    paddingBottom: isLast ? 0 : "4px",
+                                }}
+                            >
                                 <img
                                     src={section.content}
                                     alt={`post-section-${index}`}
                                     style={section.style}
                                 />
-                            )}
-                        </div>
-                    );
+                            </div>
+                        );
+                    }
                 })}
 
-                {/* Created time */}
-                <p style={{
-                    fontSize: "0.8rem",
+                <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
                     color: "rgb(137, 143, 150)",
                 }}>
-                    {formatTime(post.createdAt)}
-                </p>
+                    {/* Created time */}
+                    <p style={{
+                        fontSize: "0.8rem",
+                        marginTop: "4px",
+                        marginBottom: "4px",
+                    }}>
+                        {formatTime(post.createdAt, true)}
+                    </p>
+
+                    {/* Category with icon */}
+                    <div style={{
+                        height: "24px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.4rem",
+                    }}>
+                        <FontAwesomeIcon icon={categoryIcon} />
+                        <p>
+                            {post.category}
+                        </p>
+                    </div>
+                </div>
 
                 {/* Reaction list */}
                 <div style={{

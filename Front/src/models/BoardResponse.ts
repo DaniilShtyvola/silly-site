@@ -31,6 +31,7 @@ export type Comment = {
 export type PostDto = {
     id: string;
     contentJson: string;
+    category: string;
     createdAt: string;
     isPinned: boolean;
     reactions: Reaction[];
@@ -48,6 +49,7 @@ export type PostSection = {
 export type Post = {
     id: string;
     sections: PostSection[];
+    category: string;
     createdAt: string;
     isPinned: boolean;
     reactions: Reaction[];

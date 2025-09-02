@@ -419,10 +419,14 @@ const Auth: React.FC = () => {
                     {isLogin ? "Log in" : "Register"}
                 </Button>
 
-                <ToastMessage
-                    message={message}
-                    onClose={() => setMessage(null)}
-                />
+                <div style={{
+                    marginTop: "14px"
+                }}>
+                    <ToastMessage
+                        message={message}
+                        onClose={() => setMessage(null)}
+                    />
+                </div>
 
                 <p
                     style={{

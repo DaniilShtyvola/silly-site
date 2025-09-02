@@ -9,6 +9,7 @@ public class PostWithCommentsDto
 {
     public string Id { get; set; }
     public string ContentJson { get; set; }
+    public string Category { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsPinned { get; set; }
 
