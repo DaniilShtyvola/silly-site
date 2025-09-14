@@ -11,6 +11,7 @@ import Auth from "./pages/Auth/Auth";
 import Profile from "./pages/Profile/Profile";
 
 import { sendLog } from "./utils/SendLog";
+import Lore from "./pages/Lore/Lore";
 
 function App() {
     const [isLoadingEnded, setLoadingEnded] = useState(false);
@@ -50,9 +51,10 @@ function App() {
                     </EaseOutWrapper>
                     <Routes>
                         <Route path="/" element={<></>} />
-                        <Route path="/news" element={<Board />} />
+                        <Route path="/board" element={<Board />} />
                         <Route path="/login" element={<Auth />} />
                         <Route path="/profile" element={<Profile />} />
+                        <Route path="/lore" element={<Lore />} />
                     </Routes>
                 </Router>
             )}

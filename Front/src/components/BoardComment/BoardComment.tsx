@@ -21,7 +21,7 @@ import EaseOutWrapper from "../EaseOutWrapper/EaseOutWrapper";
 import ReactionPicker from "../ReactionPicker/ReactionPicker";
 import ReactionList from "../ReactionList/ReactionList";
 import GradientAvatar from "../GradientAvatar/GradientAvatar";
-import GradientUsername from "../GradientUsername/GradientUsername";
+import GradientText from "../GradientText/GradientText";
 
 import type { Comment, User, ParentType } from "../../models/BoardResponse";
 
@@ -178,7 +178,7 @@ const BoardComment: React.FC<BoardCommentProps> = ({ comment, users, isLast, onT
                            display: "flex",
                            alignItems: "flex-end",
                         }}>
-                           <GradientUsername
+                           <GradientText
                               text={user?.userName ?? "Unknown"}
                               colors={style.userNameColors}
                            />

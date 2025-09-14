@@ -20,5 +20,5 @@ public class User
     [MaxLength(15)]
     public string? UserNameColor { get; set; }
 
-    public ICollection<SessionInfo> SessionInfos { get; set; } = new List<SessionInfo>();
+    public ICollection<SessionInfo> SessionInfos { get; set; } = [];
 }

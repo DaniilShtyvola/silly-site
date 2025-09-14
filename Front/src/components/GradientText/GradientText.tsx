@@ -1,14 +1,14 @@
 import React from "react";
 
-import "./GradientUsername.css";
+import "./GradientText.css";
 
-interface GradientUsernameProps {
+interface GradientTextProps {
     text: string;
     colors: [string, string];
     className?: string;
 }
 
-const GradientUsername: React.FC<GradientUsernameProps> = ({
+const GradientText: React.FC<GradientTextProps> = ({
     text,
     colors,
     className = ""
@@ -32,4 +32,4 @@ const GradientUsername: React.FC<GradientUsernameProps> = ({
     );
 };
 
-export default GradientUsername;
+export default GradientText;

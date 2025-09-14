@@ -1,19 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 [ApiController]
 [Authorize]
 [Route("me")]
-public class UserController : ControllerBase
+public class UserController(MainDbContext context) : ControllerBase
 {
-    private readonly MainDbContext _context;
-
-    public UserController(MainDbContext context)
-    {
-        _context = context;
-    }
+    private readonly MainDbContext _context = context;
 
     private string? GetUserNameFromClaims()
     {

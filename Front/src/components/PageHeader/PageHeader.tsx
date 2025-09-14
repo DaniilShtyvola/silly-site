@@ -9,7 +9,7 @@ import axios from "axios";
 
 import { FontAwesomeIcon, FontAwesomeIconProps } from "@fortawesome/react-fontawesome";
 import {
-    faNewspaper,
+    faNoteSticky,
     faScrewdriverWrench,
     faCode,
     faTurnUp,
@@ -20,7 +20,7 @@ import {
 import RandomText from "../RandomText/RandomText";
 import EaseOutWrapper from "../EaseOutWrapper/EaseOutWrapper";
 import GradientAvatar from "../GradientAvatar/GradientAvatar";
-import GradientUsername from "../GradientUsername/GradientUsername";
+import GradientText from "../GradientText/GradientText";
 
 import useAuthAvatar from '../../hooks/UseAuth';
 
@@ -54,13 +54,13 @@ const CustomNavLink: React.FC<CustomNavLinkProps> = ({
                 to={link}
                 className={`custom-nav-link ${location.pathname === link ? 'selected' : ''}`}
                 style={{
-                    padding: "0px 22px"
+                    padding: "6px 22px"
                 }}
                 onMouseEnter={() => onHover(tooltip, link)}
                 onMouseLeave={() => onHover('', '')}
             >
-                {icon && <FontAwesomeIcon icon={icon} />}{" "}
-                {text}
+                {icon && <FontAwesomeIcon icon={icon} />}
+                {` ${text}`}
             </Nav.Link>
         </Nav>
     );
@@ -199,7 +199,8 @@ const PageHeader: FC<PageHeaderProps> = () => {
                 style={{
                     width: "100%",
                     borderBottom: "rgb(43, 48, 52) solid 1px",
-                    color: "white"
+                    color: "white",
+                    padding: 0,
                 }}
             >
                 <Nav
@@ -209,8 +210,8 @@ const PageHeader: FC<PageHeaderProps> = () => {
                         flexDirection: "row"
                     }}
                 >
-                    <CustomNavLink link={"/news"} icon={faNewspaper} text={"News"} tooltip={"Boy, this is so educational!"} onHover={handleHover} />
-                    <CustomNavLink link={"/creator"} icon={faCode} text={"Creator"} tooltip={"Find out who made that mess."} onHover={handleHover} />
+                    <CustomNavLink link={"/board"} icon={faNoteSticky} text={"Board"} tooltip={"Boy, this is so educational!"} onHover={handleHover} />
+                    <CustomNavLink link={"/lore"} icon={faCode} text={"Lore"} tooltip={"It’s over 9000… words about this site!"} onHover={handleHover} />
                     {isAdmin && (
                         <CustomNavLink link={"/admin"} icon={faScrewdriverWrench} text={"Admin"} tooltip={"Manage and oversee everything here."} onHover={handleHover} />
                     )}
@@ -230,7 +231,7 @@ const PageHeader: FC<PageHeaderProps> = () => {
                         >
                             <CustomNavLink
                                 link={"/profile"}
-                                text={<GradientUsername text={username} colors={style.userNameColors} />}
+                                text={<GradientText text={username} colors={style.userNameColors} />}
                                 tooltip={"Your profile needs more SSStyle."}
                                 onHover={handleHover}
                             />

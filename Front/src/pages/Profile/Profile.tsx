@@ -22,7 +22,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import GradientAvatar from "../../components/GradientAvatar/GradientAvatar";
-import GradientUsername from "../../components/GradientUsername/GradientUsername";
+import GradientText from "../../components/GradientText/GradientText";
 import ToastMessage from "../../components/ToastMessage/ToastMessage";
 
 import GradientDirectionPicker from "../../components/GradientDirectionPicker/GradientDirectionPicker";
@@ -289,7 +289,7 @@ const Profile: React.FC = () => {
                                             display: "flex",
                                             alignItems: "center"
                                         }}>
-                                            <GradientUsername
+                                            <GradientText
                                                 text={info?.userName}
                                                 colors={style.userNameColors}
                                             />
