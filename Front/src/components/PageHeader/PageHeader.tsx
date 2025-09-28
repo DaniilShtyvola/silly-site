@@ -60,7 +60,7 @@ const CustomNavLink: React.FC<CustomNavLinkProps> = ({
                 onMouseLeave={() => onHover('', '')}
             >
                 {icon && <FontAwesomeIcon icon={icon} />}
-                {` ${text}`}
+                <span style={{ marginLeft: "4px" }}>{text}</span>
             </Nav.Link>
         </Nav>
     );
@@ -211,7 +211,7 @@ const PageHeader: FC<PageHeaderProps> = () => {
                     }}
                 >
                     <CustomNavLink link={"/board"} icon={faNoteSticky} text={"Board"} tooltip={"Boy, this is so educational!"} onHover={handleHover} />
-                    <CustomNavLink link={"/lore"} icon={faCode} text={"Lore"} tooltip={"It’s over 9000… words about this site!"} onHover={handleHover} />
+                    <CustomNavLink link={"/lore"} icon={faCode} text={"Lore"} tooltip={"It’s over 9000… lines of code!"} onHover={handleHover} />
                     {isAdmin && (
                         <CustomNavLink link={"/admin"} icon={faScrewdriverWrench} text={"Admin"} tooltip={"Manage and oversee everything here."} onHover={handleHover} />
                     )}
@@ -247,7 +247,7 @@ const PageHeader: FC<PageHeaderProps> = () => {
                                     style={{
                                         position: "absolute",
                                         left: "-18px",
-                                        top: "-6px"
+                                        top: "-2px"
                                     }}
                                     onMouseEnter={() => handleHover("Your profile needs more SSStyle.", "/profile")}
                                     onMouseLeave={() => handleHover('', '')}

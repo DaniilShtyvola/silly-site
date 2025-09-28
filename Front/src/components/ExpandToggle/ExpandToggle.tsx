@@ -21,7 +21,7 @@ const ExpandToggle: React.FC<ExpandToggleProps> = ({ isExpanded, onToggle, left 
                fontSize: "1.2rem",
                position: "relative",
                backgroundColor: "rgb(23, 25, 27)",
-               padding: "4px",
+               padding: "4px 2px",
                left: left,
                top: "-0.8rem",
                borderRadius: "1rem",

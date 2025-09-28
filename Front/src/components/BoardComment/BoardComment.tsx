@@ -43,7 +43,16 @@ interface BoardCommentProps {
    >;
 }
 
-const BoardComment: React.FC<BoardCommentProps> = ({ comment, users, isLast, onToggleReaction, onDeleteComment, onAddReply, onEditComment, setMessage }) => {
+const BoardComment: React.FC<BoardCommentProps> = ({
+   comment,
+   users,
+   isLast,
+   onToggleReaction,
+   onDeleteComment,
+   onAddReply,
+   onEditComment,
+   setMessage
+}) => {
    const [isExpanded, setIsExpanded] = useState(false);
    const [isReplying, setIsReplying] = useState(false);
    const [isEditing, setIsEditing] = useState(false);
@@ -105,7 +114,6 @@ const BoardComment: React.FC<BoardCommentProps> = ({ comment, users, isLast, onT
    };
 
    const toggleReplying = () => {
-      console.log("lala");
       const token = localStorage.getItem("token");
 
       if (!token) {
@@ -226,7 +234,7 @@ const BoardComment: React.FC<BoardCommentProps> = ({ comment, users, isLast, onT
                                     alignItems: "center",
                                     marginLeft: "1rem",
                                     height: "26px",
-                                    borderRadius: (showNewReactionList && availableReactions.length > 0 && !isEditing)? "0 0.8rem 0.8rem 0" : "0.8rem",
+                                    borderRadius: (showNewReactionList && availableReactions.length > 0 && !isEditing) ? "0 0.8rem 0.8rem 0" : "0.8rem",
                                     position: "relative",
                                     top: "-26px",
                                     paddingInline: "0.1rem",
@@ -387,6 +395,7 @@ const BoardComment: React.FC<BoardCommentProps> = ({ comment, users, isLast, onT
                   isExpanded={isExpanded}
                   onAddReply={handleAddReply}
                   onCancel={() => setIsReplying(false)}
+                  setMessage={setMessage}
                />
             )}
 

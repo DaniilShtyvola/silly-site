@@ -12,6 +12,15 @@ html, body, #root {
     font-size: 14px;
 }
 
+body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+body::-webkit-scrollbar {
+    display: none
+}
+
 .form-control {
     background-color: rgb(33, 37, 41);
     color: white;

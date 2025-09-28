@@ -3,10 +3,12 @@ import { useState } from "react";
 import { Form } from "react-bootstrap";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
     faCircleXmark,
     faShare,
-    faCircleExclamation
+    faCircleExclamation,
+    faFaceSadTear,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface ReplyBoxProps {
@@ -15,6 +17,9 @@ interface ReplyBoxProps {
     isExpanded: boolean;
     onAddReply: (text: string) => void;
     onCancel: () => void;
+    setMessage?: React.Dispatch<
+        React.SetStateAction<{ text: string; variant: string; icon: IconDefinition } | null>
+    >;
 }
 
 const ReplyBox: React.FC<ReplyBoxProps> = ({
@@ -23,6 +28,7 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({
     isExpanded,
     onAddReply,
     onCancel,
+    setMessage
 }) => {
     const [replyText, setReplyText] = useState("");
     const [countWarning, setCountWarning] = useState<number | null>(null);
@@ -65,6 +71,22 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({
             onAddReply(replyText);
             setReplyText("");
             onCancel();
+        } else {
+            let errorText = "";
+
+            if (replyText.trim().length === 0) {
+                errorText = "Reply cannot be empty.";
+            } else if (replyText.length > 400) {
+                errorText = "Reply cannot exceed 400 characters.";
+            } else if (hasInvalidCharacters) {
+                errorText = "Reply contains invalid characters.";
+            }
+
+            setMessage?.({
+                text: errorText,
+                variant: "danger",
+                icon: faFaceSadTear,
+            });
         }
     };
 

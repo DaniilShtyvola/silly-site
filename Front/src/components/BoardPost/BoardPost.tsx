@@ -38,7 +38,15 @@ interface BoardPostProps {
     >;
 }
 
-const BoardPost: React.FC<BoardPostProps> = ({ post, users, onToggleReaction, onDeleteComment, onAddReply, onEditComment, setMessage }) => {
+const BoardPost: React.FC<BoardPostProps> = ({
+    post,
+    users,
+    onToggleReaction,
+    onDeleteComment,
+    onAddReply,
+    onEditComment,
+    setMessage
+}) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isReplying, setIsReplying] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
@@ -283,6 +291,7 @@ const BoardPost: React.FC<BoardPostProps> = ({ post, users, onToggleReaction, on
                     isExpanded={isExpanded}
                     onAddReply={handleAddReply}
                     onCancel={() => setIsReplying(false)}
+                    setMessage={setMessage}
                 />
             )}
 

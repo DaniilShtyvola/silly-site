@@ -63,7 +63,9 @@ const GradientAvatar: React.FC<GradientAvatarProps> = ({
                     backgroundImage: `linear-gradient(${direction}, ${colors[0]}, ${colors[1]})`,
                     color: backgroundColor ? backgroundColor : "rgb(23, 25, 27)",
                     fontSize: size * 0.65,
-                    display: "inline-block"
+                    display: "inline-block",
+                    width: size * 0.65,
+                    borderRadius: "4px",
                 }}
                 transform={`shrink-${shrinkLevel}`}
             />

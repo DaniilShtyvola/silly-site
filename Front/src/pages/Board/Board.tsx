@@ -51,7 +51,7 @@ const Board: React.FC = () => {
             `${API_URL}/board?skip=${newSkip}&take=${newTake}`,
             { headers }
          );
-
+         
          const parsedPosts = parsePosts(response.data.posts);
 
          if (append && boardData) {
