@@ -1,4 +1,4 @@
-import { 
+import {
     faFaceAngry,
     faFaceFrown,
     faFaceLaugh,
@@ -38,6 +38,10 @@ import {
     faXmark,
     faLink,
     faBullhorn,
+    faBolt,
+    faKey,
+    faCircleCheck,
+    faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 
 export const ReactionIcons = {
@@ -95,4 +99,27 @@ export const AvatarIcons = {
     gauge: faGauge,
     batteryFull: faBatteryFull,
     boltLightning: faBoltLightning,
+};
+
+export const LogTypeIcons = {
+    system: {
+        icon: faGear,
+        color: "rgb(100, 105, 111)",
+    },
+    action: {
+        icon: faBolt,
+        color: "rgb(137, 143, 150)",
+    },
+    auth: {
+        icon: faKey,
+        color: "rgb(100, 105, 111)",
+    },
+    success: {
+        icon: faCircleCheck,
+        color: "rgb(40, 167, 69)",
+    },
+    error: {
+        icon: faTriangleExclamation,
+        color: "rgb(220, 53, 69)",
+    },
 };

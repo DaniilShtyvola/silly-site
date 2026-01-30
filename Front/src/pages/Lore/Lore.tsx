@@ -50,7 +50,7 @@ const Lore: React.FC = () => {
                     display: "flex",
                     justifyContent: "center",
                     fontSize: "1.2rem",
-                    marginTop: "1.2rem",
+                    marginTop: "0.4rem",
                     alignItems: "flex-end",
                 }}>
 
@@ -69,141 +69,95 @@ const Lore: React.FC = () => {
                         <FontAwesomeIcon icon={faGithub} />
                     </a>
 
-                    <div>
-                        <p style={{
-                            fontSize: "0.8rem",
-                            color: "rgb(100, 105, 111)",
-                            marginLeft: "0.8rem"
-                        }}>
-                            Social
-                        </p>
-
-                        <div style={{
-                            display: "flex"
-                        }} >
-                            <OverlayTrigger
-                                placement="top"
-                                delay={{ show: 500, hide: 0 }}
-                                overlay={
-                                    <Tooltip id="discord-tooltip">
-                                        4elster
-                                    </Tooltip>
-                                }
+                    <div style={{
+                        display: "flex"
+                    }} >
+                        <OverlayTrigger
+                            placement="top"
+                            delay={{ show: 500, hide: 0 }}
+                            overlay={
+                                <Tooltip id="discord-tooltip">
+                                    _elstr
+                                </Tooltip>
+                            }
+                        >
+                            <div
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    padding: "0.5rem 0.8rem",
+                                    cursor: "help",
+                                    color: "rgb(137, 143, 150)",
+                                }}
                             >
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        padding: "0.5rem 0.8rem",
-                                        cursor: "help",
-                                        color: "rgb(137, 143, 150)",
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faDiscord} />
-                                </div>
-                            </OverlayTrigger>
-
-                            <OverlayTrigger
-                                placement="top"
-                                delay={{ show: 500, hide: 0 }}
-                                overlay={
-                                    <Tooltip id="discord-tooltip">
-                                        DaniilShtyvola
-                                    </Tooltip>
-                                }
-                            >
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        padding: "0.5rem 0.8rem",
-                                        cursor: "help",
-                                        color: "rgb(137, 143, 150)",
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faTelegram} />
-                                </div>
-                            </OverlayTrigger>
-                        </div>
+                                <FontAwesomeIcon icon={faDiscord} />
+                            </div>
+                        </OverlayTrigger>
                     </div>
 
-                    <div>
-                        <p style={{
-                            fontSize: "0.8rem",
-                            color: "rgb(100, 105, 111)",
-                            marginLeft: "0.8rem"
-                        }}>
-                            Procrastination
-                        </p>
+                    <a
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "0.5rem 0.8rem",
+                            cursor: "pointer",
+                            color: "rgb(137, 143, 150)",
+                        }}
+                        href="https://steamcommunity.com/id/_elstr/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <FontAwesomeIcon icon={faSteam} />
+                    </a>
 
-                        <div style={{
-                            display: "flex"
-                        }} >
-                            <a
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "0.5rem 0.8rem",
-                                    cursor: "pointer",
-                                    color: "rgb(137, 143, 150)",
-                                }}
-                                href="https://steamcommunity.com/id/4elster/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <FontAwesomeIcon icon={faSteam} />
-                            </a>
+                    <a
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "0.5rem 0.8rem",
+                            cursor: "pointer",
+                            color: "rgb(137, 143, 150)",
+                        }}
+                        href="https://www.tiktok.com/@elstr88"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <FontAwesomeIcon icon={faTiktok} />
+                    </a>
 
-                            <a
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "0.5rem 0.8rem",
-                                    cursor: "pointer",
-                                    color: "rgb(137, 143, 150)",
-                                }}
-                                href="https://www.tiktok.com/@4elster"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <FontAwesomeIcon icon={faTiktok} />
-                            </a>
+                    <a
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "0.5rem 0.8rem",
+                            cursor: "pointer",
+                            color: "rgb(137, 143, 150)",
+                        }}
+                        href="https://hianime.to/community/user/9130514"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <svg width="16" height="14" viewBox="0 0 77 62" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M73 34.5H57L54.5 0.5H76.5L73 34.5Z" fill="#898F96" />
+                            <path d="M0.5 1H14.5V22C16 19.6667 21 15 29 15C43.4 15 46.6667 28.3333 46.5 35V61.5H32V35C31.6667 32.3333 29.4 27 23 27C15 27 14.5 34.5 14.5 35V62H0.5V1Z" fill="#898F96" />
+                            <path d="M54 52.5C54.1667 55.6667 56.6 62 65 62C73.8 62 76.3333 55.6667 76.5 52.5C76.3333 49 73.8 42 65 42C56.2 42 54 49 54 52.5Z" fill="#898F96" />
+                        </svg>
+                    </a>
 
-                            <a
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "0.5rem 0.8rem",
-                                    cursor: "pointer",
-                                    color: "rgb(137, 143, 150)",
-                                }}
-                                href="https://hianime.to/community/user/9130514"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <svg width="16" height="14" viewBox="0 0 77 62" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M73 34.5H57L54.5 0.5H76.5L73 34.5Z" fill="#898F96" />
-                                    <path d="M0.5 1H14.5V22C16 19.6667 21 15 29 15C43.4 15 46.6667 28.3333 46.5 35V61.5H32V35C31.6667 32.3333 29.4 27 23 27C15 27 14.5 34.5 14.5 35V62H0.5V1Z" fill="#898F96" />
-                                    <path d="M54 52.5C54.1667 55.6667 56.6 62 65 62C73.8 62 76.3333 55.6667 76.5 52.5C76.3333 49 73.8 42 65 42C56.2 42 54 49 54 52.5Z" fill="#898F96" />
-                                </svg>
-                            </a>
-
-                            <a
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "0.5rem 0.8rem",
-                                    cursor: "pointer",
-                                    color: "rgb(137, 143, 150)",
-                                }}
-                                href="https://open.spotify.com/user/31rdjrmdcea2olaytqffffgbn6oy"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <FontAwesomeIcon icon={faSpotify} />
-                            </a>
-                        </div>
-                    </div>
+                    <a
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "0.5rem 0.8rem",
+                            cursor: "pointer",
+                            color: "rgb(137, 143, 150)",
+                        }}
+                        href="https://open.spotify.com/user/31rdjrmdcea2olaytqffffgbn6oy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <FontAwesomeIcon icon={faSpotify} />
+                    </a>
                 </div>
             </div>
 

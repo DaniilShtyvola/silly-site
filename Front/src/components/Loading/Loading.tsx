@@ -2,125 +2,91 @@ import React, { useState, useEffect, useRef } from "react";
 
 import './Loading.css';
 
-import { ProgressBar, Spinner } from "react-bootstrap";
+import { ProgressBar, Spinner, Button } from "react-bootstrap";
 
 import { FontAwesomeIcon, FontAwesomeIconProps } from "@fortawesome/react-fontawesome";
-import { 
-    faCheck, 
-    faSatellite, 
-    faGlobe, 
-    faMagnifyingGlass, 
-    faServer, 
-    faHourglassStart, 
-    faPercent 
+import {
+    faCheck,
+    faGlobe,
+    faServer,
+    faPercent,
+    faHistory,
+    faXmark,
+    faCircleInfo,
+    faArrowUpRightFromSquare
 } from "@fortawesome/free-solid-svg-icons";
 
+import EaseOutWrapper from "../EaseOutWrapper/EaseOutWrapper";
 import LoadingDots from "../LoadingDots/LoadingsDots";
 import RandomText from "../RandomText/RandomText";
 import ExplosionWrapper from "../ExplosionWrapper/ExplosionWrapper";
+import { formatTimeAgo } from "../../utils/FormatTime";
 
 interface StageProps {
     icon?: FontAwesomeIconProps['icon'];
     text: string;
-    status: boolean;
+    status?: boolean;
     show: boolean;
     size: string;
-    hide?: boolean;
+    fail?: boolean;
 }
 
-const Stage: React.FC<StageProps> = ({ icon, text, show, status, size, hide }) => {
-    const [isVisible, setIsVisible] = useState(true);
-    const [shouldRender, setShouldRender] = useState(true);
-    const [height, setHeight] = useState<string | number>("auto");
-
+const Stage: React.FC<StageProps> = ({ icon, text, show, status = true, size, fail }) => {
     const ref = useRef<HTMLDivElement>(null);
 
     const endsWithDots = text.endsWith("...");
 
-    useEffect(() => {
-        if (hide) {
-            if (ref.current) {
-                const el = ref.current;
-                setHeight(el.scrollHeight);
-                requestAnimationFrame(() => {
-                    setIsVisible(false);
-                    setHeight(0);
-                });
+    const iconColor = fail
+        ? "rgb(220, 53, 69)"
+        : icon && size === "small"
+            ? "rgb(100, 105, 111)"
+            : status
+                ? "rgb(100, 105, 111)"
+                : "rgb(25, 135, 84)";
 
-                const timeout = setTimeout(() => {
-                    setShouldRender(false);
-                }, 300);
-
-                return () => clearTimeout(timeout);
-            }
-        } else {
-            setShouldRender(true);
-            setIsVisible(true);
-            if (ref.current) {
-                const el = ref.current;
-                const fullHeight = el.scrollHeight;
-                setHeight(0);
-                requestAnimationFrame(() => {
-                    setHeight(fullHeight);
-                });
-
-                const timeout = setTimeout(() => {
-                    setHeight("15px");
-                }, 300);
-
-                return () => clearTimeout(timeout);
-            }
-        }
-    }, [hide]);
-
-    if (!shouldRender) return null;
+    const iconToShow = icon ? icon : fail ? faXmark : faCheck;
 
     return (
-        <div
-            ref={ref}
-            style={{
-                display: "flex",
-                overflow: "hidden",
-                fontSize: size === "big" ? "1rem" : "0.7rem",
-                fontWeight: 500,
-                color: size === "big" ? "rgb(137, 143, 150)" : "rgb(100, 105, 111)",
-                alignItems: "center",
-                marginTop: size === "big" ? "6px" : "4px",
-                marginLeft: size === "big" ? "6px" : "30px",
-                opacity: isVisible && show ? 1 : 0,
-                transform: isVisible && show ? "translateY(0)" : "translateY(-10px)",
-                transition: "opacity 0.3s ease, transform 0.3s ease, height 0.3s ease",
-                height: height
-            }}
+        <EaseOutWrapper
+            show={show}
         >
-            {status && !icon ? (
-                <Spinner
-                    style={{
-                        width: size === "big" ? "16px" : "10px",
-                        height: size === "big" ? "16px" : "10px",
-                        borderWidth: size === "big" ? "3px" : "2px"
-                    }}
-                />
-            ) : (
-                <FontAwesomeIcon
-                    style={{
-                        color: icon && size === "small"
-                            ? "rgb(100, 105, 111)"
-                            : status
-                                ? "rgb(100, 105, 111)"
-                                : "rgb(25, 135, 84)",
-                        width: size === "big" ? "16px" : "10px"
-                    }}
-                    icon={icon || faCheck}
-                />
-            )}
-            <p style={{ marginLeft: size === "big" ? "6px" : "4px" }}>
-                <RandomText text={endsWithDots ? text.slice(0, -3) : text} speed={10} />
-                {endsWithDots && (
-                    <LoadingDots />
+            <div
+                ref={ref}
+                style={{
+                    display: "flex",
+                    overflow: "hidden",
+                    fontSize: size === "big" ? "1rem" : "0.7rem",
+                    fontWeight: 500,
+                    color: size === "big" ? "rgb(137, 143, 150)" : "rgb(100, 105, 111)",
+                    alignItems: "center",
+                    marginTop: size === "big" ? "6px" : "4px",
+                    marginLeft: size === "big" ? "6px" : "30px",
+                    transition: "opacity 0.3s ease, transform 0.3s ease",
+                }}
+            >
+                {status && !icon && !fail ? (
+                    <Spinner
+                        style={{
+                            width: size === "big" ? "16px" : "10px",
+                            height: size === "big" ? "16px" : "10px",
+                            borderWidth: size === "big" ? "3px" : "2px"
+                        }}
+                    />
+                ) : (
+                    <FontAwesomeIcon
+                        style={{
+                            color: iconColor,
+                            width: size === "big" ? "16px" : "10px"
+                        }}
+                        icon={iconToShow}
+                    />
                 )}
-            </p>
-        </div>
+                <p style={{ marginLeft: size === "big" ? "6px" : "4px" }}>
+                    <RandomText text={endsWithDots ? text.slice(0, -3) : text} speed={10} />
+                    {endsWithDots && <LoadingDots />}
+                </p>
+            </div>
+        </EaseOutWrapper>
     );
 };
 
@@ -128,53 +94,93 @@ interface LoadingProps {
     onAnimationComplete?: () => void;
 }
 
-const Loading: React.FC<LoadingProps> = ({
-    onAnimationComplete,
-}) => {
+export const Loading: React.FC<LoadingProps> = ({ onAnimationComplete }) => {
     const [progress, setProgress] = useState(0);
-    const [progressBarText, setProgressBarText] = useState<string>('Please Stand By');
+    const [progressBarText, setProgressBarText] = useState<string>("Please Stand By");
+    const [waiting, setWaiting] = useState(false);
+
+    const [lastSeenPrevious, setLastSeenPrevious] = useState<string | null>(null);
+    const [serverOffline, setServerOffline] = useState<boolean>(false);
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setProgress((prevProgress) => {
-                const next = prevProgress + 1;
-                if (prevProgress === 150) {
-                    clearInterval(interval);
-                    return prevProgress;
-                }
-                if (prevProgress > 110) {
-                    setProgressBarText("Succesfully launched the website!")
-                }
+        const checkLocalStorage = () => {
+            const lastSeenValue = localStorage.getItem("lastSeenPrevious");
+            if (lastSeenValue) {
+                setLastSeenPrevious(lastSeenValue);
+                setWaiting(false);
+            }
 
-                return next;
-            });
-        }, 150);
+            const serverOfflineValue = localStorage.getItem("isServerOffline");
+            setServerOffline(serverOfflineValue === "true");
+        };
+
+        checkLocalStorage();
+
+        const interval = setInterval(checkLocalStorage, 300);
 
         return () => clearInterval(interval);
     }, []);
 
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setProgress((prevProgress) => {
+                let delta = 1;
+
+                if (waiting) {
+                    delta = 0.3;
+                }
+
+                if (serverOffline) {
+                    delta = 5;
+                }
+
+                const next = prevProgress + delta;
+
+                if (next >= 150) {
+                    clearInterval(interval);
+                    return 150;
+                }
+
+                if (next > 110) {
+                    setProgressBarText("Successfully launched the website!");
+                }
+
+                if (waiting && !serverOffline && next >= 100) {
+                    return 100;
+                }
+
+                return next;
+            });
+        }, 70);
+
+        return () => clearInterval(interval);
+    }, [waiting, serverOffline]);
+
+    useEffect(() => {
+        if (progress >= 100 && !lastSeenPrevious) {
+            setWaiting(true);
+        }
+        if (lastSeenPrevious && waiting) {
+            setWaiting(false);
+        }
+    }, [progress, lastSeenPrevious]);
+
     return (
-        <div style={{
-            paddingTop: "20%"
-        }}>
-            <ExplosionWrapper
-                explode={progress >= 125}
-                onAnimationComplete={onAnimationComplete}
-            >
-                <div style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "flex-start",
-                }}>
-                    <p style={{
-                        color: "white",
-                        fontSize: "1.2rem",
-                        margin: "4px 4px",
-                        fontWeight: "600",
-                        textAlign: "center"
-                    }}>
+        <div style={{ paddingTop: "20%" }}>
+            <ExplosionWrapper explode={progress > 150} onAnimationComplete={onAnimationComplete}>
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-start" }}>
+                    <p
+                        style={{
+                            color: "white",
+                            fontSize: "1.2rem",
+                            margin: "4px 4px",
+                            fontWeight: "600",
+                            textAlign: "center",
+                        }}
+                    >
                         <RandomText text={progressBarText} speed={20} />
                     </p>
+
                     <ProgressBar
                         now={progress}
                         label={
@@ -182,16 +188,16 @@ const Loading: React.FC<LoadingProps> = ({
                                 style={{
                                     display: "flex",
                                     alignItems: "center",
-                                    justifyContent: "center"
+                                    justifyContent: "center",
                                 }}
                             >
                                 {`${progress < 100 ? progress : 100}`}
                                 <FontAwesomeIcon
                                     icon={faPercent}
                                     style={{
-                                        marginLeft: '2px',
+                                        marginLeft: "2px",
                                         fontSize: "1rem",
-                                        paddingTop: "1px"
+                                        paddingTop: "1px",
                                     }}
                                 />
                             </div>
@@ -200,36 +206,74 @@ const Loading: React.FC<LoadingProps> = ({
                         style={{
                             backgroundColor: "rgb(33, 37, 41)",
                             width: "480px",
-                            height: "18px"
+                            height: "18px",
                         }}
                     />
 
-                    <Stage icon={faGlobe} text={progress < 35 ? "Checking your connection..." : "Personal information stolen"} show={progress > 5} status={progress < 35} size="big" />
-                    <Stage text="Eating your cookies" show={progress > 6} status={progress < 10} hide={progress > 43} size="small" />
-                    <Stage text="Installing spyware that you won't even notice" show={progress > 10} status={progress < 21} hide={progress > 43} size="small" />
-                    <Stage text="Uploading your entire browser history" show={progress > 21} status={progress < 30} hide={progress > 43} size="small" />
-                    <Stage text="Stealing your IP address" show={progress > 30} status={progress < 35} hide={progress > 43} size="small" />
+                    <Stage
+                        icon={faGlobe}
+                        text={progress < 45 ? "Checking your connection..." : "Personal information stolen"}
+                        show={progress > 5}
+                        status={progress < 35}
+                        size="big"
+                    />
+                    <Stage text="Uploading your entire browser history" show={progress > 12} status={progress < 32} size="small" />
+                    <Stage text="Stealing your IP address" show={progress > 28} status={progress < 38} size="small" />
+                    <Stage text="Eating your cookies" show={progress > 32} status={progress < 45} size="small" />
 
-                    <Stage icon={faSatellite} text={progress < 59 ? "Connecting to satellite..." : "Satellite configuration changed"} show={progress > 35} status={progress < 59} size="big" />
-                    <Stage text="Sending signal to the satellite" show={progress > 37} status={progress < 40} hide={progress > 67} size="small" />
-                    <Stage text="Aligning satellite to lock onto your location" show={progress > 40} status={progress < 54} hide={progress > 67} size="small" />
-                    <Stage text="Adjusting the lens" show={progress > 54} status={progress < 59} hide={progress > 67} size="small" />
+                    <Stage
+                        icon={faServer}
+                        text={serverOffline ? "Failed to connect to backend" : progress < 100 ? "Connecting to the backend..." : "Connected to the mothership"}
+                        show={progress > 42}
+                        status={progress < 100}
+                        size="big"
+                        fail={serverOffline}
+                    />
+                    <Stage text={serverOffline ? "Most features will not work" : "Dusting off the servers"} show={progress > 44} status={progress < 58} size="small" fail={serverOffline} />
+                    <Stage icon={serverOffline ? faCircleInfo : undefined} text={serverOffline ? "Please contact site creator" : "Decrypting the ancient scrolls"} show={progress > 56} status={progress < 76} size="small" fail={serverOffline} />
+                    {!serverOffline && (
+                        <>
+                            <Stage text="Activating secret government protocols" show={progress > 72} status={progress < 95} size="small" />
 
-                    <Stage icon={faMagnifyingGlass} text={progress < 78 ? "Tracking your shady activities..." : "Interpol has been notified"} show={progress > 59} status={progress < 78} size="big" />
-                    <Stage text="Accessing secret files" show={progress > 60} status={progress < 68} hide={progress > 86} size="small" />
-                    <Stage text="Scanning international criminal databases" show={progress > 68} status={progress < 74} hide={progress > 86} size="small" />
-                    <Stage text="Examining your international criminal connections" show={progress > 74} status={progress < 78} hide={progress > 86} size="small" />
-                    <Stage icon={faHourglassStart} text="Stay exactly where you are" show={progress > 76} status={progress < 78} size="small" />
+                            <Stage
+                                icon={faHistory}
+                                text={
+                                    lastSeenPrevious
+                                        ? `${formatTimeAgo(lastSeenPrevious)} since the last soul dared enter`
+                                        : "Gazing into the void..."
+                                }
+                                show={progress > 90}
+                                size="big"
+                            />
+                        </>
+                    )}
 
-                    <Stage icon={faServer} text={progress < 100 ? "Connecting to the backend..." : "Connected to the mothership"} show={progress > 78} status={progress < 100} size="big" />
-                    <Stage text="Calculating the chances of success" show={progress > 79} status={progress < 86} hide={progress > 108} size="small" />
-                    <Stage text="Dusting off the servers" show={progress > 86} status={progress < 90} hide={progress > 108} size="small" />
-                    <Stage text="Decrypting the ancient scrolls" show={progress > 90} status={progress < 95} hide={progress > 108} size="small" />
-                    <Stage text="Hacking into the Matrix" show={progress > 95} status={progress < 97} hide={progress > 108} size="small" />
-                    <Stage text="Activating secret government protocols" show={progress > 97} status={progress < 100} hide={progress > 108} size="small" />
+                    <EaseOutWrapper
+                        style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            marginTop: "1rem",
+                        }}
+                        show={
+                            progress >= 150
+                        }
+                    >
+                        <Button
+                            style={{
+                                paddingInline: "2rem"
+                            }}
+                            variant='dark'
+                            type='submit'
+                            onClick={() => {
+                                setProgress(151);
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{ marginRight: "4px" }} />Enter
+                        </Button>
+                    </EaseOutWrapper>
                 </div>
-            </ExplosionWrapper>
-        </div>
+            </ExplosionWrapper >
+        </div >
     );
 };
 

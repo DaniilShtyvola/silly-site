@@ -10,9 +10,15 @@ interface ExpandToggleProps {
    isExpanded: boolean;
    onToggle: () => void;
    left?: string;
+   top?: string;
 }
 
-const ExpandToggle: React.FC<ExpandToggleProps> = ({ isExpanded, onToggle, left = "0rem" }) => {
+const ExpandToggle: React.FC<ExpandToggleProps> = ({
+   isExpanded,
+   onToggle,
+   left = "0rem",
+   top = "0rem"
+}) => {
    return (
       <div style={{ position: "absolute" }}>
          <FontAwesomeIcon
@@ -23,7 +29,7 @@ const ExpandToggle: React.FC<ExpandToggleProps> = ({ isExpanded, onToggle, left 
                backgroundColor: "rgb(23, 25, 27)",
                padding: "4px 2px",
                left: left,
-               top: "-0.8rem",
+               top: top,
                borderRadius: "1rem",
             }}
             onClick={onToggle}

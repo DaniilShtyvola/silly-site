@@ -9,7 +9,7 @@ public class UserController(MainDbContext context) : ControllerBase
 {
     private readonly MainDbContext _context = context;
 
-    private string? GetUserNameFromClaims()
+    private string? GetUserName()
     {
         return User.Claims.FirstOrDefault(c => c.Type == "userName")?.Value;
     }
@@ -17,7 +17,7 @@ public class UserController(MainDbContext context) : ControllerBase
     [HttpGet("style")]
     public IActionResult GetUserStyle()
     {
-        var userName = GetUserNameFromClaims();
+        var userName = GetUserName();
         if (string.IsNullOrEmpty(userName))
             return Unauthorized("Invalid token.");
 
@@ -39,7 +39,7 @@ public class UserController(MainDbContext context) : ControllerBase
     [HttpPost("style")]
     public IActionResult SetUserStyle([FromBody] SetUserStyleRequest request)
     {
-        var userName = GetUserNameFromClaims();
+        var userName = GetUserName();
         if (string.IsNullOrEmpty(userName))
             return Unauthorized("Invalid token.");
 
@@ -61,7 +61,7 @@ public class UserController(MainDbContext context) : ControllerBase
     [HttpGet("info")]
     public async Task<ActionResult<UserInfoResponse>> GetUserInfo()
     {
-        var userName = GetUserNameFromClaims();
+        var userName = GetUserName();
         if (string.IsNullOrEmpty(userName))
             return Unauthorized("Invalid token.");
 

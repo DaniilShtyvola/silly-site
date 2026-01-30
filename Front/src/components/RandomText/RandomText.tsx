@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const RandomTextEffect: React.FC<{ text: string; speed: number }> = ({
+const RandomText: React.FC<{ text: string; speed: number }> = ({
     text,
     speed
 }) => {
@@ -72,4 +72,4 @@ const RandomTextEffect: React.FC<{ text: string; speed: number }> = ({
     return <>{displayedText}</>;
 };
 
-export default RandomTextEffect;
+export default RandomText;

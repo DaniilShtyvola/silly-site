@@ -20,6 +20,7 @@ import BoardPost from "../../components/BoardPost/BoardPost.tsx";
 import type { Post, Board, Comment, User, BoardDto, ParentType } from "../../models/BoardResponse.ts";
 
 import { parsePosts } from "../../utils/ParsePosts.ts";
+import GlitchText from "../../components/GlitchText/GlitchText.tsx";
 
 const Board: React.FC = () => {
    const [boardData, setBoardData] = useState<Board | null>(null);
@@ -27,6 +28,7 @@ const Board: React.FC = () => {
    const [skip, setSkip] = useState(0);
    const [take, setTake] = useState(4);
 
+   const [serverOffline, setServerOffline] = useState<boolean>(false);
    const [isLoadingMore, setIsLoadingMore] = useState(false);
    const [loading, setLoading] = useState(true);
 
@@ -37,6 +39,43 @@ const Board: React.FC = () => {
    } | null>(null);
 
    const API_URL = import.meta.env.VITE_API_URL;
+
+   useEffect(() => {
+      setLoading(true);
+
+      const serverOfflineValue = localStorage.getItem("isServerOffline") === "true";
+      setServerOffline(serverOfflineValue);
+
+      if (serverOfflineValue) {
+         setLoading(false);
+         return;
+      }
+
+      const cached = localStorage.getItem("boardData");
+
+      if (cached) {
+         const parsed = JSON.parse(cached) as {
+            posts: Post[];
+            users: User[];
+            totalPosts: number;
+            cachedAt: number;
+         };
+
+         const ttl = 15 * 60 * 1000;
+         if (Date.now() - parsed.cachedAt < ttl) {
+            setBoardData({
+               posts: parsed.posts,
+               users: parsed.users,
+               totalPosts: parsed.totalPosts,
+            });
+         }
+
+         setLoading(false);
+         return;
+      }
+
+      fetchBoard(0, 4, false);
+   }, []);
 
    const fetchBoard = async (newSkip: number, newTake: number, append = false) => {
       const token = localStorage.getItem("token");
@@ -51,8 +90,14 @@ const Board: React.FC = () => {
             `${API_URL}/board?skip=${newSkip}&take=${newTake}`,
             { headers }
          );
-         
+
          const parsedPosts = parsePosts(response.data.posts);
+
+         let newBoardData: {
+            posts: Post[];
+            users: User[];
+            totalPosts: number;
+         };
 
          if (append && boardData) {
             const mergedPosts = [...boardData.posts, ...parsedPosts];
@@ -62,18 +107,28 @@ const Board: React.FC = () => {
                mergedUsersMap.set(user.id, user);
             });
 
-            setBoardData({
+            newBoardData = {
                posts: mergedPosts,
                users: Array.from(mergedUsersMap.values()),
                totalPosts: response.data.totalPosts,
-            });
+            };
          } else {
-            setBoardData({
+            newBoardData = {
                posts: parsedPosts,
                users: response.data.users,
                totalPosts: response.data.totalPosts,
-            });
+            };
          }
+
+         setBoardData(newBoardData);
+
+         localStorage.setItem(
+            "boardData",
+            JSON.stringify({
+               ...newBoardData,
+               cachedAt: Date.now(),
+            })
+         );
       } catch (err) {
          console.error("Failed to fetch board:", err);
 
@@ -87,10 +142,6 @@ const Board: React.FC = () => {
          setIsLoadingMore(false);
       }
    };
-
-   useEffect(() => {
-      fetchBoard(0, 4, false);
-   }, []);
 
    const loadMore = () => {
       if (!boardData) return;
@@ -157,6 +208,13 @@ const Board: React.FC = () => {
             icon: faFaceLaugh,
          });
 
+         localStorage.setItem(
+            "boardData",
+            JSON.stringify({
+               ...boardData,
+               cachedAt: Date.now(),
+            })
+         );
       } catch (err) {
          console.error("Failed to delete comment:", err);
 
@@ -226,6 +284,13 @@ const Board: React.FC = () => {
             icon: faFaceLaugh,
          });
 
+         localStorage.setItem(
+            "boardData",
+            JSON.stringify({
+               ...boardData,
+               cachedAt: Date.now(),
+            })
+         );
       } catch (err) {
          console.error("Failed to add reply:", err);
 
@@ -285,6 +350,13 @@ const Board: React.FC = () => {
             icon: faFaceLaugh,
          });
 
+         localStorage.setItem(
+            "boardData",
+            JSON.stringify({
+               ...boardData,
+               cachedAt: Date.now(),
+            })
+         );
       } catch (err) {
          console.error("Failed to edit comment:", err);
 
@@ -369,6 +441,13 @@ const Board: React.FC = () => {
             return { ...prev, posts: updatedPosts };
          });
 
+         localStorage.setItem(
+            "boardData",
+            JSON.stringify({
+               ...boardData,
+               cachedAt: Date.now(),
+            })
+         );
       } catch (err) {
          console.error("Failed to toggle reaction:", err);
 
@@ -472,7 +551,7 @@ const Board: React.FC = () => {
                   textAlign: "center",
                }}
             >
-               <FontAwesomeIcon icon={faFaceSadTear} /> No board data
+               <GlitchText text={serverOffline ? "Server is offline." : "No board data."}/>
             </p>
          )}
 

@@ -112,6 +112,7 @@ const PageHeader: FC<PageHeaderProps> = () => {
 
     useEffect(() => {
         const savedStyle = localStorage.getItem("userStyle");
+
         if (savedStyle) {
             try {
                 const parsed = JSON.parse(savedStyle) as UserStyle;
@@ -125,6 +126,8 @@ const PageHeader: FC<PageHeaderProps> = () => {
     useEffect(() => {
         const handleLoggedIn = async () => {
             try {
+                localStorage.removeItem("boardData");
+
                 const token = localStorage.getItem("token");
                 if (!token) return;
 
@@ -153,6 +156,8 @@ const PageHeader: FC<PageHeaderProps> = () => {
 
     useEffect(() => {
         const handleLoggedOut = () => {
+            localStorage.removeItem("boardData");
+
             setStyle({
                 avatarColors: ["#898F96", "#898F96"],
                 userNameColors: ["#898F96", "#898F96"],

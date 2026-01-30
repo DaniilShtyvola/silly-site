@@ -20,6 +20,7 @@ import RandomText from "../../components/RandomText/RandomText";
 
 import { sendLog } from "../../utils/SendLog";
 import ToastMessage from "../../components/ToastMessage/ToastMessage";
+import GlitchText from "../../components/GlitchText/GlitchText";
 
 const PasswordStrengthMeter: React.FC<{ password: string }> = ({ password }) => {
     const testResult = zxcvbn(password);
@@ -111,6 +112,8 @@ const Auth: React.FC = () => {
 
     const [isGeneratingPassword, setIsGeneratingPassword] = useState(false);
 
+    const [serverOffline, setServerOffline] = useState<boolean>(false);
+
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
@@ -130,6 +133,15 @@ const Auth: React.FC = () => {
     }, [isLogin]);
 
     const API_URL = import.meta.env.VITE_API_URL;
+
+    useEffect(() => {
+        const serverOfflineValue = localStorage.getItem("isServerOffline") === "true";
+        setServerOffline(serverOfflineValue);
+
+        if (serverOfflineValue) {
+            return;
+        }
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -203,9 +215,12 @@ const Auth: React.FC = () => {
         }
 
         try {
+            let sessionId = localStorage.getItem("sessionId");
+
             const payload = {
                 userName: username,
                 password: password,
+                sessionId,
             };
 
             if (isLogin) {
@@ -223,8 +238,6 @@ const Auth: React.FC = () => {
                 window.dispatchEvent(new Event("loggedIn"));
 
                 navigate("/profile");
-
-                sendLog("The user has logged in.", "info");
             } else {
                 await axios.post(`${API_URL}/auth/register`, payload);
 
@@ -235,7 +248,7 @@ const Auth: React.FC = () => {
                 });
 
                 setIsLogin(true);
-                sendLog("The user has registered an account.", "info");
+                sendLog("User registered an account", "auth");
             }
 
             setPassword("");
@@ -337,128 +350,140 @@ const Auth: React.FC = () => {
 
     return (
         <div>
-            <Form onSubmit={handleSubmit} style={{ width: "300px" }}>
-                <Form.Group>
-                    <Form.Control
-                        name="username"
-                        placeholder='Username'
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                        autoComplete={isLogin ? "username" : "new-username"}
-                    />
-                </Form.Group>
-                <Form.Group >
-                    <Form.Control
-                        name="password"
-                        type='text'
-                        placeholder='Password'
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={isGeneratingPassword}
-                        autoComplete={isLogin ? "current-password" : "new-password"}
-                        style={{ marginTop: "8px" }}
-                    />
-                    {!isLogin && <PasswordStrengthMeter password={password} />}
-                </Form.Group>
+            {!serverOffline ? (
+                <Form onSubmit={handleSubmit} style={{ width: "300px" }}>
+                    <Form.Group>
+                        <Form.Control
+                            name="username"
+                            placeholder='Username'
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                            autoComplete={isLogin ? "username" : "new-username"}
+                        />
+                    </Form.Group>
+                    <Form.Group >
+                        <Form.Control
+                            name="password"
+                            type='text'
+                            placeholder='Password'
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            disabled={isGeneratingPassword}
+                            autoComplete={isLogin ? "current-password" : "new-password"}
+                            style={{ marginTop: "8px" }}
+                        />
+                        {!isLogin && <PasswordStrengthMeter password={password} />}
+                    </Form.Group>
 
-                {!isLogin && (
-                    <>
-                        <Form.Group
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "12px",
-                                color: "rgb(137, 143, 150)",
-                                marginTop: "2px"
-                            }}
-                        >
-                            <Form.Control
-                                name="confirm-password"
-                                type='password'
-                                placeholder='Confirm password'
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                required
-                                disabled={isGeneratingPassword}
-                            />
-                            or
-                            <Button
-                                variant="dark"
-                                type="button"
-                                onClick={() => {
-                                    generateStrongPassword(setPassword, setConfirmPassword, () => isLoginRef.current);
-                                }}
-                                disabled={isGeneratingPassword}
-                            >
-                                <FontAwesomeIcon icon={faDice} />
-                            </Button>
-                        </Form.Group>
-                        <p style={{
-                            color: "rgb(100, 105, 111)",
-                            fontSize: "0.7rem",
-                            position: "relative",
-                            whiteSpace: "nowrap",
-                            marginTop: "4px"
-                        }}>
-                            No loot worth stealing here anyway...
-                        </p>
-                    </>
-                )}
-
-                <Button
-                    className='w-100'
-                    style={{
-                        marginTop: "1rem"
-                    }}
-                    variant='dark'
-                    type='submit'
-                    disabled={isGeneratingPassword || message?.text != null}
-                >
-                    {isLogin ? "Log in" : "Register"}
-                </Button>
-
-                <div style={{
-                    marginTop: "14px"
-                }}>
-                    <ToastMessage
-                        message={message}
-                        onClose={() => setMessage(null)}
-                    />
-                </div>
-
-                <p
-                    style={{
-                        color: "grey",
-                        textAlign: "center",
-                        marginTop: "1rem",
-                        fontSize: "0.8rem"
-                    }}
-                >
-                    {isLogin ? "No account? Rip and... " : (
+                    {!isLogin && (
                         <>
-                            The only thing they fear...<br /> is you
+                            <Form.Group
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "12px",
+                                    color: "rgb(137, 143, 150)",
+                                    marginTop: "2px"
+                                }}
+                            >
+                                <Form.Control
+                                    name="confirm-password"
+                                    type='password'
+                                    placeholder='Confirm password'
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    disabled={isGeneratingPassword}
+                                />
+                                or
+                                <Button
+                                    variant="dark"
+                                    type="button"
+                                    onClick={() => {
+                                        generateStrongPassword(setPassword, setConfirmPassword, () => isLoginRef.current);
+                                    }}
+                                    disabled={isGeneratingPassword}
+                                >
+                                    <FontAwesomeIcon icon={faDice} />
+                                </Button>
+                            </Form.Group>
+                            <p style={{
+                                color: "rgb(100, 105, 111)",
+                                fontSize: "0.7rem",
+                                position: "relative",
+                                whiteSpace: "nowrap",
+                                marginTop: "4px"
+                            }}>
+                                No loot worth stealing here anyway...
+                            </p>
                         </>
                     )}
-                    <span
+
+                    <Button
+                        className='w-100'
                         style={{
-                            color: "rgb(25, 135, 84)",
-                            cursor: "pointer",
-                            fontSize: "1rem"
+                            marginTop: "1rem"
                         }}
-                        onClick={() => {
-                            setIsLogin(!isLogin);
-                            setPassword("");
-                            setConfirmPassword("");
-                            setUsername("");
-                            setMessage(null);
+                        variant='dark'
+                        type='submit'
+                        disabled={isGeneratingPassword || message?.text != null}
+                    >
+                        {isLogin ? "Log in" : "Register"}
+                    </Button>
+
+                    <div style={{
+                        marginTop: "14px"
+                    }}>
+                        <ToastMessage
+                            message={message}
+                            onClose={() => setMessage(null)}
+                        />
+                    </div>
+
+                    <p
+                        style={{
+                            color: "grey",
+                            textAlign: "center",
+                            marginTop: "1rem",
+                            fontSize: "0.8rem"
                         }}
                     >
-                        {isLogin ? "register." : " logging in."}
-                    </span>
+                        {isLogin ? "No account? Rip and... " : (
+                            <>
+                                The only thing they fear...<br /> is you
+                            </>
+                        )}
+                        <span
+                            style={{
+                                color: "rgb(25, 135, 84)",
+                                cursor: "pointer",
+                                fontSize: "1rem"
+                            }}
+                            onClick={() => {
+                                setIsLogin(!isLogin);
+                                setPassword("");
+                                setConfirmPassword("");
+                                setUsername("");
+                                setMessage(null);
+                            }}
+                        >
+                            {isLogin ? "register." : " logging in."}
+                        </span>
+                    </p>
+                </Form>
+            ) : (
+                <p
+                    style={{
+                        color: "rgb(137, 143, 150)",
+                        fontSize: "0.9rem",
+                        textAlign: "center",
+                    }}
+                >
+                    <GlitchText text={"Server is offline."} />
                 </p>
-            </Form>
+            )}
         </div>
     );
 };

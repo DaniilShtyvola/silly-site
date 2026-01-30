@@ -9,9 +9,10 @@ import EaseOutWrapper from "./components/EaseOutWrapper/EaseOutWrapper";
 import Board from "./pages/Board/Board";
 import Auth from "./pages/Auth/Auth";
 import Profile from "./pages/Profile/Profile";
+import Lore from "./pages/Lore/Lore";
+import Admin from "./pages/Admin/Admin";
 
 import { sendLog } from "./utils/SendLog";
-import Lore from "./pages/Lore/Lore";
 
 function App() {
     const [isLoadingEnded, setLoadingEnded] = useState(false);
@@ -30,7 +31,7 @@ function App() {
             setLoadingEnded(true);
         } else {
             localStorage.clear();
-            sendLog("The user created a new session.", "info");
+            sendLog("Created a new session", "system");
         }
     }, []);
 
@@ -55,6 +56,7 @@ function App() {
                         <Route path="/login" element={<Auth />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/lore" element={<Lore />} />
+                        <Route path="/admin" element={<Admin />} />
                     </Routes>
                 </Router>
             )}

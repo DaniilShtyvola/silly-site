@@ -264,14 +264,16 @@ const BoardPost: React.FC<BoardPostProps> = ({
                 </div>
 
                 {/* Reaction list */}
-                <div style={{
-                    marginLeft: post.comments.length > 0 ? "2rem" : "0",
-                }}>
-                    <ReactionList
-                        reactions={post.reactions}
-                        onToggleReaction={handleToggleReaction}
-                    />
-                </div>
+                {post.reactions.length > 0 && (
+                    <div style={{
+                        marginLeft: post.comments.length > 0 ? "2rem" : "0",
+                    }}>
+                        <ReactionList
+                            reactions={post.reactions}
+                            onToggleReaction={handleToggleReaction}
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Button to open replies */}
@@ -280,6 +282,7 @@ const BoardPost: React.FC<BoardPostProps> = ({
                     isExpanded={isExpanded}
                     onToggle={() => setIsExpanded(!isExpanded)}
                     left="1.2rem"
+                    top="-0.8rem"
                 />
             )}
 

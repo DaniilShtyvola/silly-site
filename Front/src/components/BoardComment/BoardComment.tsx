@@ -136,6 +136,7 @@ const BoardComment: React.FC<BoardCommentProps> = ({
             <div style={{
                display: "flex"
             }}>
+               {/* Thread tree lines */}
                <div style={{
                   display: "flex",
                   flexDirection: "column",
@@ -153,6 +154,7 @@ const BoardComment: React.FC<BoardCommentProps> = ({
                      borderLeft: isLast ? "none" : "rgb(49, 53, 58) 2px solid",
                   }} />
                </div>
+
                <div
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
@@ -370,10 +372,12 @@ const BoardComment: React.FC<BoardCommentProps> = ({
                      )}
 
                      {/* Reaction list */}
-                     <ReactionList
-                        reactions={comment.reactions}
-                        onToggleReaction={handleToggleReaction}
-                     />
+                     {comment.reactions.length > 0 && (
+                        <ReactionList
+                           reactions={comment.reactions}
+                           onToggleReaction={handleToggleReaction}
+                        />
+                     )}
                   </div>
                </div>
             </div>
@@ -383,7 +387,8 @@ const BoardComment: React.FC<BoardCommentProps> = ({
                <ExpandToggle
                   isExpanded={isExpanded}
                   onToggle={() => setIsExpanded(!isExpanded)}
-                  left="3.6rem"
+                  left="3.55rem"
+                  top="-0.7rem"
                />
             )}
 

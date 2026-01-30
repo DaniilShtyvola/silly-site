@@ -4,9 +4,16 @@ using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("board")]
-public class BoardController(MainDbContext context) : ControllerBase
+public class BoardController : ControllerBase
 {
-    private readonly MainDbContext _context = context;
+    private readonly MainDbContext _context;
+    private readonly ILogService _logService;
+
+    public BoardController(MainDbContext context, ILogService logService)
+    {
+        _context = context;
+        _logService = logService;
+    }
 
     private string? GetUserName() =>
         User.Claims.FirstOrDefault(c => c.Type == "userName")?.Value;
@@ -52,6 +59,13 @@ public class BoardController(MainDbContext context) : ControllerBase
         _context.Comments.Add(comment);
         await _context.SaveChangesAsync();
 
+        await _logService.CreateLogAsync(
+            message: "Added comment",
+            logType: "action",
+            sessionId: null,
+            userName: user.UserName
+        );
+
         var dto = new CommentDto
         {
             Id = comment.Id,
@@ -86,6 +100,13 @@ public class BoardController(MainDbContext context) : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        await _logService.CreateLogAsync(
+            message: "Deleted comment",
+            logType: "action",
+            sessionId: null,
+            userName: user.UserName
+        );
+
         return Ok(new { success = true });
     }
 
@@ -111,6 +132,13 @@ public class BoardController(MainDbContext context) : ControllerBase
 
         _context.Comments.Update(comment);
         await _context.SaveChangesAsync();
+
+        await _logService.CreateLogAsync(
+            message: "Edited comment",
+            logType: "action",
+            sessionId: null,
+            userName: user.UserName
+        );
 
         return Ok(new { success = true });
     }
@@ -224,15 +252,18 @@ public class BoardController(MainDbContext context) : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        await _logService.CreateLogAsync(
+            message: "Toggled reaction",
+            logType: "action",
+            sessionId: null,
+            userName: user.UserName
+        );
+
         return Ok(new { success = true });
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetBoard(
-        [FromQuery] int skip = 0,
-        [FromQuery] int take = 4,
-        [FromQuery] string? category = null)
-    {
+    public async Task<IActionResult> GetBoard([FromQuery] GetBoardRequest request) {
         var userName = GetUserName();
         var isAdmin = IsAdmin();
         var currentUser = await GetCurrentUserAsync(userName);
@@ -241,10 +272,10 @@ public class BoardController(MainDbContext context) : ControllerBase
             return Unauthorized();
 
         var totalPosts = await _context.Posts.CountAsync();
-        var posts = await GetPostsAsync(skip, take, category);
+        var posts = await GetPostsAsync(request.Skip, request.Take, request.Category);
 
         if (posts.Count == 0)
-            return Ok(new BoardResponse { Posts = [], Users = [], TotalPosts = totalPosts });
+            return Ok(new GetBoardResponse { Posts = [], Users = [], TotalPosts = totalPosts });
 
         var postIds = posts.Select(p => p.Id).ToList();
         var allComments = await GetAllCommentsForPostsAsync(postIds);
@@ -257,7 +288,27 @@ public class BoardController(MainDbContext context) : ControllerBase
 
         AddCurrentUserToUsersList(currentUser, usersById);
 
-        return Ok(new BoardResponse
+        if(!string.IsNullOrEmpty(request.SessionId) || userName != null)
+    {
+            string logMessage;
+            if (request.Skip == 0)
+            {
+                logMessage = $"Loaded first {posts.Count} posts";
+            }
+            else
+            {
+                logMessage = $"Loaded next {posts.Count} posts";
+            }
+
+            await _logService.CreateLogAsync(
+                message: logMessage,
+                logType: "action",
+                sessionId: request.SessionId,
+                userName: userName
+            );
+        }
+
+        return Ok(new GetBoardResponse
         {
             Posts = postsWithComments,
             Users = [.. usersById.Values],

@@ -36,6 +36,7 @@ import {
     parseStyle,
     serializeStyle
 } from "../../utils/ParseStyle";
+import { sendLog } from "../../utils/SendLog";
 
 type ColorKey = "avatarColor0" | "avatarColor1" | "userNameColor0" | "userNameColor1";
 
@@ -196,6 +197,8 @@ const Profile: React.FC = () => {
         localStorage.removeItem("userStyle");
 
         window.dispatchEvent(new Event("loggedOut"));
+
+        sendLog("User logged out", "auth")
 
         navigate("/login");
     };

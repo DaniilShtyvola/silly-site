@@ -1,4 +1,4 @@
-﻿public class BoardResponse
+﻿public class GetBoardResponse
 {
     public List<PostWithCommentsDto> Posts { get; set; } = [];
     public List<UserDto> Users { get; set; } = [];

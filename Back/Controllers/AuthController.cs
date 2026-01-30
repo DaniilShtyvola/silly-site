@@ -13,12 +13,14 @@ using System.Security.Cryptography;
 public class AuthController : ControllerBase
 {
     private readonly MainDbContext _context;
-    private readonly JwtSettings _jwtSettings;
+    private readonly JwtSettings _jwtSettings; 
+    private readonly ILogService _logService;
 
-    public AuthController(MainDbContext context, IOptions<JwtSettings> jwtSettings)
+    public AuthController(MainDbContext context, IOptions<JwtSettings> jwtSettings, ILogService logService)
     {
         _context = context;
         _jwtSettings = jwtSettings.Value;
+        _logService = logService;
     }
 
     [HttpPost("login")]
@@ -34,6 +36,16 @@ public class AuthController : ControllerBase
         user.LastLogin = DateTime.UtcNow;
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
+
+        if (!string.IsNullOrEmpty(request.SessionId))
+        {
+            await _logService.CreateLogAsync(
+                message: $"User logged in as {user.UserName}",
+                logType: "auth",
+                sessionId: request.SessionId,
+                userName: user.UserName
+            );
+        }
 
         return Ok(new { Token = token });
     }
